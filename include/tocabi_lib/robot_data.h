@@ -159,6 +159,7 @@ struct RobotData
     bool pc_gravity = false;
     VectorQd pc_pos_des;
     VectorQd pc_pos_init;
+    VectorQd pc_vel_init;
     double pc_traj_time_;
     double pc_time_;
 

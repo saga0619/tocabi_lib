@@ -1046,6 +1046,7 @@ namespace DyrosMath
     else
     {
       std::cout << "Winv Calc Error : rank = " << rank << std::endl;
+      return W;
     }
   }
 

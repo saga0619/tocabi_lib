@@ -227,6 +227,7 @@ namespace WBC
 
     VectorQd GravityCompenstationTorque_Isolated(RobotData &rd_, bool contact_left_foot_, bool contact_right_foot_)
     {
+        return VectorQd::Zero();
     }
 
     // template <int TaskNum>

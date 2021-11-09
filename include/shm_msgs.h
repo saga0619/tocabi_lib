@@ -21,6 +21,21 @@ typedef struct SHMmsgs
 
     int64_t tv_sec;
     int64_t tv_nsec;
+
+    pthread_spinlock_t espl_1;
+    pthread_spinlock_t espl_2;
+
+    pthread_mutex_t si_mutex;
+    pthread_cond_t si_cond_;
+
+    pthread_mutex_t ecat_mutex;
+    pthread_cond_t ecat_cond_;
+
+    pthread_mutex_t emtx_1;
+    pthread_mutex_t emtx_2;
+
+    std::atomic<bool> statusSent;
+
     std::atomic<bool> lowerReady;
     std::atomic<bool> ecatTimerSet;
 
