@@ -64,6 +64,9 @@ typedef struct SHMmsgs
     float torqueCommand[MODEL_DOF];
     float positionCommand[MODEL_DOF];
 
+    std::atomic<bool> cmd_upper;
+    std::atomic<bool> cmd_lower;
+
     int maxTorque = 0;
 
     float timeCommand;
