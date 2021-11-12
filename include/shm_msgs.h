@@ -7,6 +7,13 @@
 #include <sys/ipc.h>
 #include <time.h>
 
+
+#if defined(__x86_64) || defined(__i386)
+#define cpu_relax() __asm__("pause":::"memory")
+#else
+#define cpu_relax() __asm__("":::"memory")
+#endif
+
 //per link
 //Jac * 4
 //33 * 6 * 39 * 4
