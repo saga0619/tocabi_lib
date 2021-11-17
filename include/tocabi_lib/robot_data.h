@@ -211,7 +211,7 @@ struct DataContainer
     ros::NodeHandle nh;
     RobotData rd_;
 
-    std::atomic<int> control_command_count = 0;
+    std::atomic<int> control_command_count{0};
     std::vector<float> Kps;
     std::vector<float> Kvs;
 
