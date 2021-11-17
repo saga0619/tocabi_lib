@@ -278,7 +278,7 @@ namespace WBC
         rd_.Q_temp = rd_.Q * rd_.W_inv * rd_.Q_T_;
         //std::cout<<"2"<<std::endl;
 
-        rd_.Q_temp_inv = DyrosMath::pinv_QRs(rd_.Q_temp);
+        rd_.Q_temp_inv = DyrosMath::pinv_QR(rd_.Q_temp);
 
         //DyrosMath::dc_inv_QR(rd_.J_task)
 
@@ -536,6 +536,372 @@ namespace WBC
         }
 
         return Robot.torque_contact + command_torque;
+    }
+
+     //////////////////////////JS functions
+    Vector3d GetFstarPosJS(LinkData &link_, Eigen::Vector3d Desired_pos, Eigen::Vector3d Current_pos, Eigen::Vector3d Desired_vel, Eigen::Vector3d Current_vel)
+    {
+        Vector3d fstar;
+
+        for (int i = 0; i < 3; i++)
+            fstar(i) = link_.pos_p_gain(i) * (Desired_pos(i) - Current_pos(i)) + link_.pos_d_gain(i) * (Desired_vel(i) - Current_vel(i));
+
+        return fstar;
+    }
+
+    Vector3d GetFstarRotJS(LinkData &link_)
+    {
+        Vector3d fstar;
+
+        Vector3d ad;
+
+        ad = DyrosMath::getPhi(link_.rotm, link_.r_traj);
+
+        for (int i = 0; i < 3; i++)
+            fstar(i) = -link_.rot_p_gain(i) * ad(i) + link_.rot_d_gain(i) * (link_.w_traj(i) - link_.w(i));
+
+        //std::cout << ad.transpose() << "\t" << (link_.w_traj - link_.w).transpose() << std::endl;
+        //std::cout << DyrosMath::rot2Euler_tf(link_.rotm).transpose() << "\t" << DyrosMath::rot2Euler_tf(link_.r_traj) << std::endl;
+        //return link_.rot_p_gain.cwiseProduct(DyrosMath::getPhi(link_.rotm, link_.r_traj)); // + link_.rot_d_gain.cwiseProduct(link_.w_traj - link_.w);
+
+        return fstar;
+    }
+
+    VectorQd TaskControlTorqueMotor(RobotData &rd_, VectorXd f_star, Eigen::MatrixVVd B, Eigen::MatrixVVd B_inv)
+    {
+        int task_dof = rd_.J_task.rows();
+        //rd_.J_task = J_task;
+        rd_.J_task_T = rd_.J_task.transpose();
+
+        //Eigen::MatrixVVd B;
+        //Eigen::MatrixVVd B_inv;
+        Eigen::MatrixXd lambda_m;
+        Eigen::MatrixXd lambda_m_inv;
+        Eigen::MatrixXd J_task_inv_m_T;
+        Eigen::MatrixXd Q_m, Q_m_T, Q_m_temp, Q_m_temp_inv;
+        
+        lambda_m.resize(task_dof, task_dof);
+        lambda_m_inv.resize(task_dof, task_dof);
+        J_task_inv_m_T.resize(task_dof, MODEL_DOF_VIRTUAL);
+        Q_m.resize(task_dof, MODEL_DOF);
+        Q_m_T.resize(MODEL_DOF, task_dof);
+        Q_m_temp.resize(task_dof, task_dof);
+        Q_m_temp_inv.resize(task_dof, task_dof);
+
+        lambda_m_inv = rd_.J_task * B_inv * rd_.N_C * rd_.J_task_T;
+
+        lambda_m = lambda_m_inv.llt().solve(MatrixXd::Identity(task_dof, task_dof));
+
+        J_task_inv_m_T = lambda_m * rd_.J_task * B_inv * rd_.N_C;
+
+        //cout << "Lambda\n"<< lambda_m.block(0,0,6,6) << endl << endl;
+
+        Q_m = J_task_inv_m_T.rightCols(MODEL_DOF);
+        Q_m_T = Q_m.transpose();
+
+        //std::cout<<"1"<<std::endl;
+        Q_m_temp = Q_m * rd_.W_inv * Q_m_T;
+        //std::cout<<"2"<<std::endl;
+
+        Q_m_temp_inv = DyrosMath::pinv_QR(Q_m_temp);
+
+        //Eigen::MatrixXd JkT;
+        //JkT=rd_.W_inv * Q_m_T * Q_m_temp_inv;
+        //cout << "J_k\n"<< JkT.transpose().block(0,0,6,6) << endl << endl;
+        return rd_.W_inv * (Q_m_T * (Q_m_temp_inv * (lambda_m * f_star)));
+    }
+
+    VectorQd TaskControlTorqueExtra(RobotData &rd_, VectorXd f_star, Eigen::MatrixVVd B, Eigen::MatrixVVd B_inv)
+    {
+        //int task_dof = 1;
+        int task_dof = rd_.J_task.rows();
+        rd_.J_task_T = rd_.J_task.transpose();
+
+        // Eigen::MatrixXd Jtask_z, Jtask_z_T;
+        // Jtask_z.resize(1,rd_.J_task.cols());
+        // Jtask_z_T.resize(rd_.J_task.cols(),1);
+        // Jtask_z = rd_.J_task.block(2,0,1,rd_.J_task.cols());
+        // Jtask_z_T = Jtask_z.transpose();
+        
+        //Task Control Torque;
+        Eigen::MatrixXd lambda_m;
+        Eigen::MatrixXd lambda_m_inv;
+        Eigen::MatrixXd J_task_inv_m_T;
+        Eigen::MatrixXd Q_e, Q_e_T, Q_e_temp, Q_e_temp_inv;
+
+        lambda_m.resize(task_dof, task_dof);
+        lambda_m_inv.resize(task_dof, task_dof);
+        J_task_inv_m_T.resize(task_dof, MODEL_DOF_VIRTUAL);
+
+        Eigen::MatrixXd Si;
+        Eigen::MatrixXd SiT;
+        Eigen::MatrixXd SikT;
+
+        //knee
+        Si.setZero(2, MODEL_DOF + 6);
+        SiT.setZero(MODEL_DOF + 6, 2);
+        SikT.setZero(MODEL_DOF, 2);
+        Si(0, 9) = 1.0;
+        Si(1, 15) = 1.0;
+        SiT = Si.transpose();
+        SikT(3, 0) = 1.0;
+        SikT(9, 1) = 1.0;
+
+        // knee & hip
+        // Si.setZero(8, MODEL_DOF + 6);
+        // SiT.setZero(MODEL_DOF + 6, 8);
+        // SikT.setZero(MODEL_DOF, 8);
+        // Si(0, 6) = 1.0;
+        // Si(1, 7) = 1.0;
+        // Si(2, 8) = 1.0;
+        // Si(3, 9) = 1.0;//무릎관절
+
+        // Si(4, 12) = 1.0;
+        // Si(5, 13) = 1.0;
+        // Si(6, 14) = 1.0;
+        // Si(7, 15) = 1.0;//무릎관절
+        // SiT = Si.transpose();
+        // SikT(0, 0) = 1.0;
+        // SikT(1, 1) = 1.0;
+        // SikT(2, 2) = 1.0;
+        // SikT(3, 3) = 1.0;
+        // SikT(6, 4) = 1.0;
+        // SikT(7, 5) = 1.0;
+        // SikT(8, 6) = 1.0;
+        // SikT(9, 7) = 1.0;
+
+        B_inv = B.llt().solve(MatrixXd::Identity(MODEL_DOF_VIRTUAL, MODEL_DOF_VIRTUAL));
+
+        lambda_m_inv = rd_.J_task * B_inv * rd_.N_C * rd_.J_task_T;
+        //lambda_m_inv = Jtask_z * B_inv * rd_.N_C * Jtask_z_T;
+
+        lambda_m = lambda_m_inv.llt().solve(MatrixXd::Identity(task_dof, task_dof));
+
+        J_task_inv_m_T = lambda_m * rd_.J_task * B_inv * rd_.N_C;
+        //J_task_inv_m_T = lambda_m * Jtask_z * B_inv * rd_.N_C;
+
+        Eigen::MatrixXd Wi;
+        Eigen::MatrixXd Wi_inv;
+
+        Wi = Si * rd_.A_inv_ * rd_.N_C * SiT; //2 types for w matrix
+        Wi_inv = DyrosMath::pinv_QR(Wi);
+
+        Q_e = J_task_inv_m_T * SiT;
+        Q_e_T = Q_e.transpose();
+
+        //std::cout<<"1"<<std::endl;
+        Q_e_temp = Q_e * Wi_inv * Q_e_T;
+        //std::cout<<"2"<<std::endl;
+
+        Q_e_temp_inv = DyrosMath::pinv_QR(Q_e_temp);
+        //DyrosMath::dc_inv_QR(rd_.J_task)
+        return SikT * Wi_inv * (Q_e_T * (Q_e_temp_inv * (lambda_m * f_star)));
+    }
+
+    VectorXd Forcecompute(RobotData &rd_, VectorXd torque, Eigen::MatrixVVd B, Eigen::MatrixVVd B_inv)
+    {
+        int task_dof = rd_.J_task.rows();
+        //rd_.J_task = J_task;
+        rd_.J_task_T = rd_.J_task.transpose();
+
+        //Eigen::MatrixVVd B;
+        //Eigen::MatrixVVd B_inv;
+        Eigen::VectorXd vTorque;
+        Eigen::MatrixXd lambda_m;
+        Eigen::MatrixXd lambda_m_inv;
+        Eigen::MatrixXd J_task_inv_m_T;
+        Eigen::MatrixXd Q_m, Q_m_T, Q_m_temp, Q_m_temp_inv;
+        
+        vTorque.resize(MODEL_DOF_VIRTUAL);
+        lambda_m.resize(task_dof, task_dof);
+        lambda_m_inv.resize(task_dof, task_dof);
+        J_task_inv_m_T.resize(task_dof, MODEL_DOF_VIRTUAL);
+        Q_m.resize(task_dof, MODEL_DOF);
+        Q_m_T.resize(MODEL_DOF, task_dof);
+        Q_m_temp.resize(task_dof, task_dof);
+        Q_m_temp_inv.resize(task_dof, task_dof);
+
+        vTorque.setZero();
+
+        lambda_m_inv = rd_.J_task * B_inv * rd_.N_C * rd_.J_task_T;
+        lambda_m = lambda_m_inv.llt().solve(MatrixXd::Identity(task_dof, task_dof));
+        J_task_inv_m_T = lambda_m * rd_.J_task * B_inv * rd_.N_C;
+
+        Eigen::VectorXd value;
+        value.resize(8);
+
+        Eigen::VectorXd force;
+        vTorque(6+0) = torque(0);
+        force = J_task_inv_m_T*vTorque;
+        value(0) = force(2);
+
+        vTorque(6+0) = 0.0;
+        vTorque(6+1) = torque(1);
+        force = J_task_inv_m_T*vTorque;
+        value(1) = force(2);
+
+        vTorque(6+1) = 0.0;
+        vTorque(6+2) = torque(2);
+        force = J_task_inv_m_T*vTorque;
+        value(2) = force(2);
+
+        vTorque(6+2) = 0.0;
+        vTorque(6+3) = torque(3);
+        force = J_task_inv_m_T*vTorque;
+        value(3) = force(2);
+
+        vTorque(6+3) = 0.0;
+        vTorque(6+6) = torque(6);
+        force = J_task_inv_m_T*vTorque;
+        value(4) = force(2);
+
+        vTorque(6+6) = 0.0;
+        vTorque(6+7) = torque(7);
+        force = J_task_inv_m_T*vTorque;
+        value(5) = force(2);
+
+        vTorque(6+7) = 0.0;
+        vTorque(6+8) = torque(8);
+        force = J_task_inv_m_T*vTorque;
+        value(6) = force(2);
+
+        vTorque(6+8) = 0.0;
+        vTorque(6+9) = torque(9);
+        force = J_task_inv_m_T*vTorque;
+        value(7) = force(2);
+
+        return value;
+    }
+
+    VectorQd Vgravitytoruqe(RobotData &rd_)
+    {
+        rd_.G.setZero();
+        for (int i = 0; i < MODEL_DOF + 1; i++)
+            rd_.G -= rd_.link_[i].jac_com.cast<double>().topRows(3).transpose() * rd_.link_[i].mass * rd_.grav_ref;
+
+        VectorQd grav;
+        grav = rd_.G.segment(6,MODEL_DOF);
+        rd_.torque_grav = rd_.W_inv * (rd_.A_inv_.bottomRows(MODEL_DOF) * (rd_.N_C * rd_.G));
+        rd_.P_C = rd_.J_C_INV_T * rd_.G;
+
+        return grav;
+    }
+
+    VectorQd newtasktorque(RobotData &rd_, VectorXd f_star, Eigen::MatrixVVd B, Eigen::MatrixVVd B_inv, VectorXd Fc)
+    {
+        VectorQd zero;
+        zero.setZero();
+        int task_dof = rd_.J_task.rows();
+        rd_.J_task_T = rd_.J_task.transpose();
+
+        //Eigen::MatrixVVd B;
+        //Eigen::MatrixVVd B_inv;
+        Eigen::MatrixXd lambda_m;
+        Eigen::MatrixXd lambda_m_inv;
+        Eigen::MatrixXd J_task_inv_m_T;
+        Eigen::MatrixXd Q_m, Q_m_T, Q_m_temp, Q_m_temp_inv;
+        
+        lambda_m.resize(task_dof, task_dof);
+        lambda_m_inv.resize(task_dof, task_dof);
+        J_task_inv_m_T.resize(task_dof, MODEL_DOF_VIRTUAL);
+        Q_m.resize(task_dof, MODEL_DOF);
+        Q_m_T.resize(MODEL_DOF, task_dof);
+        Q_m_temp.resize(task_dof, task_dof);
+        Q_m_temp_inv.resize(task_dof, task_dof);
+
+        lambda_m_inv = rd_.J_task * B_inv * rd_.J_task_T;
+
+        lambda_m = lambda_m_inv.llt().solve(MatrixXd::Identity(task_dof, task_dof));
+
+        J_task_inv_m_T = lambda_m * rd_.J_task * B_inv;
+
+        Eigen::MatrixXd Wi;
+        Eigen::MatrixXd Wi_inv;
+
+        Wi = rd_.A_inv_.block(6,6,MODEL_DOF,MODEL_DOF); //2 types for w matrix
+        Wi_inv = DyrosMath::pinv_QR(Wi);
+
+        Q_m = J_task_inv_m_T.rightCols(MODEL_DOF);
+        Q_m_T = Q_m.transpose();
+        Q_m_temp = Q_m * Wi_inv * Q_m_T;
+
+        //cout << lambda_m_inv << endl << endl;
+
+        Q_m_temp_inv = DyrosMath::pinv_QR(Q_m_temp);
+
+        return Wi_inv * (Q_m_T * (Q_m_temp_inv * (lambda_m * f_star + J_task_inv_m_T * rd_.J_C.transpose() * Fc)));
+    }
+
+
+    VectorQd ContactForceRedistributionTorqueJS(RobotData &Robot, VectorQd command_torque, double ratio, int supportFoot)//
+    {
+
+        int contact_dof_ = Robot.J_C.rows();
+
+        if (contact_dof_ == 12)
+        {
+            Vector12d ContactForce_ = Robot.J_C_INV_T.rightCols(MODEL_DOF) * command_torque - Robot.P_C;
+
+            Vector3d P1_ = Robot.ee_[0].xpos_contact - Robot.link_[COM_id].xpos;
+            Vector3d P2_ = Robot.ee_[1].xpos_contact - Robot.link_[COM_id].xpos;
+
+            Matrix3d Rotyaw = DyrosMath::rotateWithZ(-Robot.yaw);
+
+            Eigen::Matrix<double, 12, 12> force_rot_yaw;
+            force_rot_yaw.setZero();     
+            for (int i = 0; i < 4; i++)
+            {
+                force_rot_yaw.block(i * 3, i * 3, 3, 3) = Rotyaw;
+            }
+
+            Vector6d ResultantForce_;
+            ResultantForce_.setZero();
+
+            Vector12d ResultRedistribution_;
+            ResultRedistribution_.setZero();
+
+            Vector12d F12 = force_rot_yaw * ContactForce_;
+
+            double eta_cust = 0.99;
+            double foot_length = 0.26;
+            double foot_width = 0.1;
+            double eta;
+
+            ForceRedistributionTwoContactMod2(0.99, foot_length, foot_width, 1.0, 0.9, 0.9, Rotyaw * P1_, Rotyaw * P2_, F12, ResultantForce_, ResultRedistribution_, eta);
+            Robot.fc_redist_ = force_rot_yaw.transpose() * ResultRedistribution_;
+
+            Vector12d desired_force;
+            desired_force.setZero();
+
+            bool right_master;
+
+            if (supportFoot == 0)
+            {
+                right_master = 1.0;
+            }
+            else
+            {
+                right_master = 0.0;
+            }
+
+            if (right_master)
+            {
+
+                desired_force.segment(0, 6) = -ContactForce_.segment(0, 6) + ratio * Robot.fc_redist_.segment(0, 6);
+                Robot.torque_contact = Robot.qr_V2.transpose() * (Robot.J_C_INV_T.rightCols(MODEL_DOF).topRows(6) * Robot.qr_V2.transpose()).inverse() * desired_force.segment(0, 6);
+            }
+            else
+            {
+                desired_force.segment(6, 6) = -ContactForce_.segment(6, 6) + ratio * Robot.fc_redist_.segment(6, 6);
+                Robot.torque_contact = Robot.qr_V2.transpose() * (Robot.J_C_INV_T.rightCols(MODEL_DOF).bottomRows(6) * Robot.qr_V2.transpose()).inverse() * desired_force.segment(6, 6);
+            }
+        }
+        else
+        {
+            Robot.torque_contact.setZero();
+        }
+
+        return Robot.torque_contact;
     }
 
 }
