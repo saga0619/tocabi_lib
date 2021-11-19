@@ -124,6 +124,10 @@ typedef struct SHMmsgs
     volatile bool safety_reset_upper_signal;
     bool force_load_saved_signal = false;
 
+
+    volatile int e1_m[10] = {0};
+    volatile int e2_m[10] = {0};
+
 } SHMmsgs;
 
 //static SHMmsgs *shm_msgs_;
