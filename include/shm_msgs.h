@@ -90,6 +90,8 @@ typedef struct SHMmsgs
     std::atomic<bool> emergencyOff;
     volatile bool controlModeLower;
     volatile bool controlModeUpper;
+    volatile bool initializeModeLower;
+    volatile bool initializeModeUpper;
     volatile bool safety_disable;
     volatile bool lower_disabled;
 
