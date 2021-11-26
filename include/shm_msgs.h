@@ -33,6 +33,13 @@ typedef struct SHMmsgs
 
     std::atomic<int> statusCount;
     std::atomic<int> statusCount2;
+    std::atomic<int> watchCount;
+    std::atomic<int> watchCount2;
+
+    volatile int wc1_level;
+    volatile int wc2_level;
+
+
     std::atomic<int> avatarCount;
     
     std::atomic<int> statusWriting;
@@ -211,7 +218,7 @@ static void init_shm(int shm_key, int &shm_id_, SHMmsgs **shm_ref)
 
     if ((*shm_ref)->process_num == 0)
     {
-        printf("Process num 0 ! Clean Start!\n");
+        // printf("Process num 0 ! Clean Start!\n");
     }
 
     (*shm_ref)->process_num++;
