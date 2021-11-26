@@ -7,11 +7,12 @@
 #include <sys/ipc.h>
 #include <time.h>
 
-
 #if defined(__x86_64) || defined(__i386)
-#define cpu_relax() __asm__("pause":::"memory")
+#define cpu_relax() __asm__("pause" :: \
+                                : "memory")
 #else
-#define cpu_relax() __asm__("":::"memory")
+#define cpu_relax() __asm__("" :: \
+                                : "memory")
 #endif
 
 //per link
@@ -39,9 +40,8 @@ typedef struct SHMmsgs
     volatile int wc1_level;
     volatile int wc2_level;
 
-
     std::atomic<int> avatarCount;
-    
+
     std::atomic<int> statusWriting;
     std::atomic<bool> triggerS1;
 
@@ -87,7 +87,6 @@ typedef struct SHMmsgs
 
     std::atomic<int64_t> control_time_us_;
 
-    
     volatile int t_cnt;
     volatile int t_cnt2;
     std::atomic<bool> controllerReady;
@@ -107,20 +106,30 @@ typedef struct SHMmsgs
     std::atomic<bool> upperTimerSet;
     std::atomic<bool> lowerTimerSet;
 
-    int lat_ovf, lat_ovf2;
-    int send_ovf, send_ovf2;
 
     float lat_avg, lat_min, lat_max, lat_dev;
     float send_avg, send_min, send_max, send_dev;
+    float rcv_avg, rcv_min, rcv_max, rcv_dev;
+    int lat_ovf, send_ovf;
 
     float lat_avg2, lat_min2, lat_max2, lat_dev2;
     float send_avg2, send_min2, send_max2, send_dev2;
+    float rcv_avg2, rcv_min2, rcv_max2, rcv_dev2;
+    int lat_ovf2, send_ovf2;
 
     int low_rcv_ovf, low_mid_ovf, low_snd_ovf;
     int low_rcv_us, low_mid_us, low_snd_us;
     float low_rcv_avg, low_rcv_max;
     float low_mid_avg, low_mid_max;
-    float low_snd_avg, low_snd_max;    
+    float low_snd_avg, low_snd_max;
+
+    int lat_h[20];
+    int send_h[20];
+    int rcv_h[20];
+
+    int lat2_h[20];
+    int send2_h[20];
+    int rcv2_h[20];
 
     int low_toff;
     int upp_toff;
@@ -132,7 +141,6 @@ typedef struct SHMmsgs
     volatile bool safety_reset_lower_signal;
     volatile bool safety_reset_upper_signal;
     bool force_load_saved_signal = false;
-
 
     volatile int e1_m[10] = {0};
     volatile int e2_m[10] = {0};
