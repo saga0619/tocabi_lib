@@ -69,7 +69,7 @@ typedef struct SHMmsgs
     int imu_state;
     int ft_state;
 
-    bool mujoco_dist;
+    volatile bool mujoco_dist;
 
     //command val
 
