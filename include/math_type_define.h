@@ -94,6 +94,7 @@ namespace Eigen
 
   typedef Matrix<rScalar, 6, MODEL_DOF> Matrix6Qd;
   typedef Matrix<rScalar, MODEL_DOF, MODEL_DOF> MatrixQQd;
+  typedef Matrix<rScalar, MODEL_DOF_VIRTUAL, MODEL_DOF_VIRTUAL> MatrixVQVQd;
   typedef Matrix<rScalar, 3, MODEL_DOF> Matrix3Qd;
 
   //Complex
@@ -1028,7 +1029,7 @@ namespace DyrosMath
   static Eigen::MatrixQQd WinvCalc(const Eigen::MatrixQQd &W, Eigen::MatrixXd &V2)
   {
     Eigen::ColPivHouseholderQR<Eigen::MatrixQQd> qr(W);
-    qr.setThreshold(1.0e-6);
+    qr.setThreshold(1.0e-5);
     int cols = W.cols();
     int rows = W.rows();
 
