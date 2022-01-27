@@ -486,7 +486,7 @@ namespace WBC
             Robot.torque_contact.setZero();
         }
 
-        return Robot.torque_contact + command_torque;
+        return Robot.torque_contact;
     }
 
     VectorQd ContactForceRedistributionTorque(RobotData &Robot, VectorQd command_torque, double eta = 0.9)
