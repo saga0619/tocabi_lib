@@ -1029,7 +1029,7 @@ namespace DyrosMath
   static Eigen::MatrixQQd WinvCalc(const Eigen::MatrixQQd &W, Eigen::MatrixXd &V2)
   {
     Eigen::ColPivHouseholderQR<Eigen::MatrixQQd> qr(W);
-    qr.setThreshold(1.0e-5);
+    qr.setThreshold(1.0e-6);
     int cols = W.cols();
     int rows = W.rows();
 
