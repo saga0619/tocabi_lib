@@ -131,7 +131,7 @@ namespace WBC
         Robot.ee_[1].contact = right_foot;
         Robot.ee_[2].contact = left_hand;
         Robot.ee_[3].contact = right_hand;
-        
+
         Robot.contact_index = 0;
         if (left_foot)
         {
@@ -192,9 +192,9 @@ namespace WBC
         for (int i = 0; i < 3; i++)
             fstar(i) = -link_.rot_p_gain(i) * ad(i) + link_.rot_d_gain(i) * (link_.w_traj(i) - link_.w(i));
 
-        //std::cout << ad.transpose() << "\t" << (link_.w_traj - link_.w).transpose() << std::endl;
-        //std::cout << DyrosMath::rot2Euler_tf(link_.rotm).transpose() << "\t" << DyrosMath::rot2Euler_tf(link_.r_traj) << std::endl;
-        //return link_.rot_p_gain.cwiseProduct(DyrosMath::getPhi(link_.rotm, link_.r_traj)); // + link_.rot_d_gain.cwiseProduct(link_.w_traj - link_.w);
+        // std::cout << ad.transpose() << "\t" << (link_.w_traj - link_.w).transpose() << std::endl;
+        // std::cout << DyrosMath::rot2Euler_tf(link_.rotm).transpose() << "\t" << DyrosMath::rot2Euler_tf(link_.r_traj) << std::endl;
+        // return link_.rot_p_gain.cwiseProduct(DyrosMath::getPhi(link_.rotm, link_.r_traj)); // + link_.rot_d_gain.cwiseProduct(link_.w_traj - link_.w);
 
         return fstar;
     }
@@ -261,7 +261,7 @@ namespace WBC
     VectorQd TaskControlTorque(RobotData &rd_, VectorXd f_star)
     {
         int task_dof = rd_.J_task.rows();
-        //rd_.J_task = J_task;
+        // rd_.J_task = J_task;
         rd_.J_task_T = rd_.J_task.transpose();
 
         rd_.lambda_inv = rd_.J_task * rd_.A_inv_ * rd_.N_C * rd_.J_task_T;
@@ -274,15 +274,15 @@ namespace WBC
 
         rd_.Q_T_ = rd_.Q.transpose();
 
-        //std::cout<<"1"<<std::endl;
+        // std::cout<<"1"<<std::endl;
         rd_.Q_temp = rd_.Q * rd_.W_inv * rd_.Q_T_;
-        //std::cout<<"2"<<std::endl;
+        // std::cout<<"2"<<std::endl;
 
         rd_.Q_temp_inv = DyrosMath::pinv_QR(rd_.Q_temp);
 
-        //DyrosMath::dc_inv_QR(rd_.J_task)
+        // DyrosMath::dc_inv_QR(rd_.J_task)
 
-        //std::cout<<"3"<<std::endl;
+        // std::cout<<"3"<<std::endl;
 
         return rd_.W_inv * (rd_.Q_T_ * (rd_.Q_temp_inv * (rd_.lambda * f_star)));
     }
@@ -586,13 +586,13 @@ namespace WBC
         W.block(3, 0, 3, 3) = DyrosMath::skm(P1);
         W.block(3, 6, 3, 3) = DyrosMath::skm(P2);
 
-        ResultantForce = W * F12; //F1F2;
+        ResultantForce = W * F12; // F1F2;
 
         double eta_lb = 1.0 - eta_cust;
         double eta_ub = eta_cust;
-        //printf("1 lb %f ub %f\n",eta_lb,eta_ub);
+        // printf("1 lb %f ub %f\n",eta_lb,eta_ub);
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //boundary of eta Mx, A*eta + B < 0
+        // boundary of eta Mx, A*eta + B < 0
         double A = (P1(2) - P2(2)) * ResultantForce(1) - (P1(1) - P2(1)) * ResultantForce(2);
         double B = ResultantForce(3) + P2(2) * ResultantForce(1) - P2(1) * ResultantForce(2);
         double C = ratio_y * footwidth / 2.0 * abs(ResultantForce(2));
@@ -601,7 +601,7 @@ namespace WBC
         double c = B * B - C * C;
         double sol_eta1 = (-b + sqrt(b * b - 4.0 * a * c)) / 2.0 / a;
         double sol_eta2 = (-b - sqrt(b * b - 4.0 * a * c)) / 2.0 / a;
-        if (sol_eta1 > sol_eta2) //sol_eta1 ÀÌ upper boundary
+        if (sol_eta1 > sol_eta2) // sol_eta1 ÀÌ upper boundary
         {
             if (sol_eta1 < eta_ub)
             {
@@ -613,7 +613,7 @@ namespace WBC
                 eta_lb = sol_eta2;
             }
         }
-        else //sol_eta2 ÀÌ upper boundary
+        else // sol_eta2 ÀÌ upper boundary
         {
             if (sol_eta2 < eta_ub)
             {
@@ -626,9 +626,9 @@ namespace WBC
             }
         }
 
-        //printf("3 lb %f ub %f A %f B %f\n",eta_lb,eta_ub, sol_eta1, sol_eta2);
+        // printf("3 lb %f ub %f A %f B %f\n",eta_lb,eta_ub, sol_eta1, sol_eta2);
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //boundary of eta My, A*eta + B < 0
+        // boundary of eta My, A*eta + B < 0
         A = -(P1(2) - P2(2)) * ResultantForce(0) + (P1(0) - P2(0)) * ResultantForce(2);
         B = ResultantForce(4) - P2(2) * ResultantForce(0) + P2(0) * ResultantForce(2);
         C = ratio_x * footlength / 2.0 * abs(ResultantForce(2));
@@ -637,7 +637,7 @@ namespace WBC
         c = B * B - C * C;
         sol_eta1 = (-b + sqrt(b * b - 4.0 * a * c)) / 2.0 / a;
         sol_eta2 = (-b - sqrt(b * b - 4.0 * a * c)) / 2.0 / a;
-        if (sol_eta1 > sol_eta2) //sol_eta1 ÀÌ upper boundary
+        if (sol_eta1 > sol_eta2) // sol_eta1 ÀÌ upper boundary
         {
             if (sol_eta1 < eta_ub)
                 eta_ub = sol_eta1;
@@ -645,7 +645,7 @@ namespace WBC
             if (sol_eta2 > eta_lb)
                 eta_lb = sol_eta2;
         }
-        else //sol_eta2 ÀÌ upper boundary
+        else // sol_eta2 ÀÌ upper boundary
         {
             if (sol_eta2 < eta_ub)
                 eta_ub = sol_eta2;
@@ -654,9 +654,9 @@ namespace WBC
                 eta_lb = sol_eta1;
         }
 
-        //printf("5 lb %f ub %f A %f B %f\n",eta_lb,eta_ub, sol_eta1, sol_eta2);
+        // printf("5 lb %f ub %f A %f B %f\n",eta_lb,eta_ub, sol_eta1, sol_eta2);
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //boundary of eta Mz, (A^2-C^2)*eta^2 + 2*A*B*eta + B^2 < 0
+        // boundary of eta Mz, (A^2-C^2)*eta^2 + 2*A*B*eta + B^2 < 0
         A = -(P1(0) - P2(0)) * ResultantForce(1) + (P1(1) - P2(1)) * ResultantForce(0);
         B = ResultantForce(5) + P2(1) * ResultantForce(0) - P2(0) * ResultantForce(1);
         C = staticFrictionCoeff * abs(ResultantForce(2));
@@ -665,21 +665,21 @@ namespace WBC
         c = B * B - C * C;
         sol_eta1 = (-b + sqrt(b * b - 4.0 * a * c)) / 2.0 / a;
         sol_eta2 = (-b - sqrt(b * b - 4.0 * a * c)) / 2.0 / a;
-        if (sol_eta1 > sol_eta2) //sol_eta1 ÀÌ upper boundary
+        if (sol_eta1 > sol_eta2) // sol_eta1 ÀÌ upper boundary
         {
             if (sol_eta1 < eta_ub)
                 eta_ub = sol_eta1;
             if (sol_eta2 > eta_lb)
                 eta_lb = sol_eta2;
         }
-        else //sol_eta2 ÀÌ upper boundary
+        else // sol_eta2 ÀÌ upper boundary
         {
             if (sol_eta2 < eta_ub)
                 eta_ub = sol_eta2;
             if (sol_eta1 > eta_lb)
                 eta_lb = sol_eta1;
         }
-        //printf("6 lb %f ub %f A %f B %f\n",eta_lb,eta_ub, sol_eta1, sol_eta2);
+        // printf("6 lb %f ub %f A %f B %f\n",eta_lb,eta_ub, sol_eta1, sol_eta2);
 
         double eta_s = (-ResultantForce(3) - P2(2) * ResultantForce(1) + P2(1) * ResultantForce(2)) / ((P1(2) - P2(2)) * ResultantForce(1) - (P1(1) - P2(1)) * ResultantForce(2));
 
@@ -704,9 +704,9 @@ namespace WBC
         ForceRedistribution(9) = (1.0 - eta) * (((P1(2) - P2(2)) * ResultantForce(1) - (P1(1) - P2(1)) * ResultantForce(2)) * eta + (ResultantForce(3) + P2(2) * ResultantForce(1) - P2(1) * ResultantForce(2)));
         ForceRedistribution(10) = (1.0 - eta) * ((-(P1(2) - P2(2)) * ResultantForce(0) + (P1(0) - P2(0)) * ResultantForce(2)) * eta + (ResultantForce(4) - P2(2) * ResultantForce(0) + P2(0) * ResultantForce(2)));
         ForceRedistribution(11) = (1.0 - eta) * ((-(P1(0) - P2(0)) * ResultantForce(1) + (P1(1) - P2(1)) * ResultantForce(0)) * eta + (ResultantForce(5) + P2(1) * ResultantForce(0) - P2(0) * ResultantForce(1)));
-        //ForceRedistribution(9) = (1.0-eta)/eta*ForceRedistribution(3);
-        //ForceRedistribution(10) = (1.0-eta)/eta*ForceRedistribution(4);
-        //ForceRedistribution(11) = (1.0-eta)/eta*ForceRedistribution(5);
+        // ForceRedistribution(9) = (1.0-eta)/eta*ForceRedistribution(3);
+        // ForceRedistribution(10) = (1.0-eta)/eta*ForceRedistribution(4);
+        // ForceRedistribution(11) = (1.0-eta)/eta*ForceRedistribution(5);
     }
     VectorQd ContactForceRedistributionTorqueWalking(RobotData &Robot, VectorQd command_torque, double eta = 0.9, double ratio = 1.0, int supportFoot = 0)
     {
@@ -723,7 +723,7 @@ namespace WBC
             Matrix3d Rotyaw = DyrosMath::rotateWithZ(-Robot.yaw);
 
             Eigen::Matrix<double, 12, 12> force_rot_yaw;
-            force_rot_yaw.setZero();     
+            force_rot_yaw.setZero();
             for (int i = 0; i < 4; i++)
             {
                 force_rot_yaw.block(i * 3, i * 3, 3, 3) = Rotyaw;
@@ -827,7 +827,7 @@ namespace WBC
         return Robot.torque_contact + command_torque;
     }
 
-     //////////////////////////JS functions
+    //////////////////////////JS functions
     Vector3d GetFstarPosJS(LinkData &link_, Eigen::Vector3d Desired_pos, Eigen::Vector3d Current_pos, Eigen::Vector3d Desired_vel, Eigen::Vector3d Current_vel)
     {
         Vector3d fstar;
@@ -849,9 +849,9 @@ namespace WBC
         for (int i = 0; i < 3; i++)
             fstar(i) = -link_.rot_p_gain(i) * ad(i) + link_.rot_d_gain(i) * (link_.w_traj(i) - link_.w(i));
 
-        //std::cout << ad.transpose() << "\t" << (link_.w_traj - link_.w).transpose() << std::endl;
-        //std::cout << DyrosMath::rot2Euler_tf(link_.rotm).transpose() << "\t" << DyrosMath::rot2Euler_tf(link_.r_traj) << std::endl;
-        //return link_.rot_p_gain.cwiseProduct(DyrosMath::getPhi(link_.rotm, link_.r_traj)); // + link_.rot_d_gain.cwiseProduct(link_.w_traj - link_.w);
+        // std::cout << ad.transpose() << "\t" << (link_.w_traj - link_.w).transpose() << std::endl;
+        // std::cout << DyrosMath::rot2Euler_tf(link_.rotm).transpose() << "\t" << DyrosMath::rot2Euler_tf(link_.r_traj) << std::endl;
+        // return link_.rot_p_gain.cwiseProduct(DyrosMath::getPhi(link_.rotm, link_.r_traj)); // + link_.rot_d_gain.cwiseProduct(link_.w_traj - link_.w);
 
         return fstar;
     }
@@ -859,16 +859,16 @@ namespace WBC
     VectorQd TaskControlTorqueMotor(RobotData &rd_, VectorXd f_star, Eigen::MatrixVVd B, Eigen::MatrixVVd B_inv)
     {
         int task_dof = rd_.J_task.rows();
-        //rd_.J_task = J_task;
+        // rd_.J_task = J_task;
         rd_.J_task_T = rd_.J_task.transpose();
 
-        //Eigen::MatrixVVd B;
-        //Eigen::MatrixVVd B_inv;
+        // Eigen::MatrixVVd B;
+        // Eigen::MatrixVVd B_inv;
         Eigen::MatrixXd lambda_m;
         Eigen::MatrixXd lambda_m_inv;
         Eigen::MatrixXd J_task_inv_m_T;
         Eigen::MatrixXd Q_m, Q_m_T, Q_m_temp, Q_m_temp_inv;
-        
+
         lambda_m.resize(task_dof, task_dof);
         lambda_m_inv.resize(task_dof, task_dof);
         J_task_inv_m_T.resize(task_dof, MODEL_DOF_VIRTUAL);
@@ -883,26 +883,26 @@ namespace WBC
 
         J_task_inv_m_T = lambda_m * rd_.J_task * B_inv * rd_.N_C;
 
-        //cout << "Lambda\n"<< lambda_m.block(0,0,6,6) << endl << endl;
+        // cout << "Lambda\n"<< lambda_m.block(0,0,6,6) << endl << endl;
 
         Q_m = J_task_inv_m_T.rightCols(MODEL_DOF);
         Q_m_T = Q_m.transpose();
 
-        //std::cout<<"1"<<std::endl;
+        // std::cout<<"1"<<std::endl;
         Q_m_temp = Q_m * rd_.W_inv * Q_m_T;
-        //std::cout<<"2"<<std::endl;
+        // std::cout<<"2"<<std::endl;
 
         Q_m_temp_inv = DyrosMath::pinv_QR(Q_m_temp);
 
-        //Eigen::MatrixXd JkT;
-        //JkT=rd_.W_inv * Q_m_T * Q_m_temp_inv;
-        //cout << "J_k\n"<< JkT.transpose().block(0,0,6,6) << endl << endl;
+        // Eigen::MatrixXd JkT;
+        // JkT=rd_.W_inv * Q_m_T * Q_m_temp_inv;
+        // cout << "J_k\n"<< JkT.transpose().block(0,0,6,6) << endl << endl;
         return rd_.W_inv * (Q_m_T * (Q_m_temp_inv * (lambda_m * f_star)));
     }
 
     VectorQd TaskControlTorqueExtra(RobotData &rd_, VectorXd f_star, Eigen::MatrixVVd B, Eigen::MatrixVVd B_inv)
     {
-        //int task_dof = 1;
+        // int task_dof = 1;
         int task_dof = rd_.J_task.rows();
         rd_.J_task_T = rd_.J_task.transpose();
 
@@ -911,8 +911,8 @@ namespace WBC
         // Jtask_z_T.resize(rd_.J_task.cols(),1);
         // Jtask_z = rd_.J_task.block(2,0,1,rd_.J_task.cols());
         // Jtask_z_T = Jtask_z.transpose();
-        
-        //Task Control Torque;
+
+        // Task Control Torque;
         Eigen::MatrixXd lambda_m;
         Eigen::MatrixXd lambda_m_inv;
         Eigen::MatrixXd J_task_inv_m_T;
@@ -926,7 +926,7 @@ namespace WBC
         Eigen::MatrixXd SiT;
         Eigen::MatrixXd SikT;
 
-        //knee
+        // knee
         Si.setZero(2, MODEL_DOF + 6);
         SiT.setZero(MODEL_DOF + 6, 2);
         SikT.setZero(MODEL_DOF, 2);
@@ -962,45 +962,45 @@ namespace WBC
         B_inv = B.llt().solve(MatrixXd::Identity(MODEL_DOF_VIRTUAL, MODEL_DOF_VIRTUAL));
 
         lambda_m_inv = rd_.J_task * B_inv * rd_.N_C * rd_.J_task_T;
-        //lambda_m_inv = Jtask_z * B_inv * rd_.N_C * Jtask_z_T;
+        // lambda_m_inv = Jtask_z * B_inv * rd_.N_C * Jtask_z_T;
 
         lambda_m = lambda_m_inv.llt().solve(MatrixXd::Identity(task_dof, task_dof));
 
         J_task_inv_m_T = lambda_m * rd_.J_task * B_inv * rd_.N_C;
-        //J_task_inv_m_T = lambda_m * Jtask_z * B_inv * rd_.N_C;
+        // J_task_inv_m_T = lambda_m * Jtask_z * B_inv * rd_.N_C;
 
         Eigen::MatrixXd Wi;
         Eigen::MatrixXd Wi_inv;
 
-        Wi = Si * rd_.A_inv_ * rd_.N_C * SiT; //2 types for w matrix
+        Wi = Si * rd_.A_inv_ * rd_.N_C * SiT; // 2 types for w matrix
         Wi_inv = DyrosMath::pinv_QR(Wi);
 
         Q_e = J_task_inv_m_T * SiT;
         Q_e_T = Q_e.transpose();
 
-        //std::cout<<"1"<<std::endl;
+        // std::cout<<"1"<<std::endl;
         Q_e_temp = Q_e * Wi_inv * Q_e_T;
-        //std::cout<<"2"<<std::endl;
+        // std::cout<<"2"<<std::endl;
 
         Q_e_temp_inv = DyrosMath::pinv_QR(Q_e_temp);
-        //DyrosMath::dc_inv_QR(rd_.J_task)
+        // DyrosMath::dc_inv_QR(rd_.J_task)
         return SikT * Wi_inv * (Q_e_T * (Q_e_temp_inv * (lambda_m * f_star)));
     }
 
     VectorXd Forcecompute(RobotData &rd_, VectorXd torque, Eigen::MatrixVVd B, Eigen::MatrixVVd B_inv)
     {
         int task_dof = rd_.J_task.rows();
-        //rd_.J_task = J_task;
+        // rd_.J_task = J_task;
         rd_.J_task_T = rd_.J_task.transpose();
 
-        //Eigen::MatrixVVd B;
-        //Eigen::MatrixVVd B_inv;
+        // Eigen::MatrixVVd B;
+        // Eigen::MatrixVVd B_inv;
         Eigen::VectorXd vTorque;
         Eigen::MatrixXd lambda_m;
         Eigen::MatrixXd lambda_m_inv;
         Eigen::MatrixXd J_task_inv_m_T;
         Eigen::MatrixXd Q_m, Q_m_T, Q_m_temp, Q_m_temp_inv;
-        
+
         vTorque.resize(MODEL_DOF_VIRTUAL);
         lambda_m.resize(task_dof, task_dof);
         lambda_m_inv.resize(task_dof, task_dof);
@@ -1020,43 +1020,43 @@ namespace WBC
         value.resize(8);
 
         Eigen::VectorXd force;
-        vTorque(6+0) = torque(0);
-        force = J_task_inv_m_T*vTorque;
+        vTorque(6 + 0) = torque(0);
+        force = J_task_inv_m_T * vTorque;
         value(0) = force(2);
 
-        vTorque(6+0) = 0.0;
-        vTorque(6+1) = torque(1);
-        force = J_task_inv_m_T*vTorque;
+        vTorque(6 + 0) = 0.0;
+        vTorque(6 + 1) = torque(1);
+        force = J_task_inv_m_T * vTorque;
         value(1) = force(2);
 
-        vTorque(6+1) = 0.0;
-        vTorque(6+2) = torque(2);
-        force = J_task_inv_m_T*vTorque;
+        vTorque(6 + 1) = 0.0;
+        vTorque(6 + 2) = torque(2);
+        force = J_task_inv_m_T * vTorque;
         value(2) = force(2);
 
-        vTorque(6+2) = 0.0;
-        vTorque(6+3) = torque(3);
-        force = J_task_inv_m_T*vTorque;
+        vTorque(6 + 2) = 0.0;
+        vTorque(6 + 3) = torque(3);
+        force = J_task_inv_m_T * vTorque;
         value(3) = force(2);
 
-        vTorque(6+3) = 0.0;
-        vTorque(6+6) = torque(6);
-        force = J_task_inv_m_T*vTorque;
+        vTorque(6 + 3) = 0.0;
+        vTorque(6 + 6) = torque(6);
+        force = J_task_inv_m_T * vTorque;
         value(4) = force(2);
 
-        vTorque(6+6) = 0.0;
-        vTorque(6+7) = torque(7);
-        force = J_task_inv_m_T*vTorque;
+        vTorque(6 + 6) = 0.0;
+        vTorque(6 + 7) = torque(7);
+        force = J_task_inv_m_T * vTorque;
         value(5) = force(2);
 
-        vTorque(6+7) = 0.0;
-        vTorque(6+8) = torque(8);
-        force = J_task_inv_m_T*vTorque;
+        vTorque(6 + 7) = 0.0;
+        vTorque(6 + 8) = torque(8);
+        force = J_task_inv_m_T * vTorque;
         value(6) = force(2);
 
-        vTorque(6+8) = 0.0;
-        vTorque(6+9) = torque(9);
-        force = J_task_inv_m_T*vTorque;
+        vTorque(6 + 8) = 0.0;
+        vTorque(6 + 9) = torque(9);
+        force = J_task_inv_m_T * vTorque;
         value(7) = force(2);
 
         return value;
@@ -1069,7 +1069,7 @@ namespace WBC
             rd_.G -= rd_.link_[i].jac_com.cast<double>().topRows(3).transpose() * rd_.link_[i].mass * rd_.grav_ref;
 
         VectorQd grav;
-        grav = rd_.G.segment(6,MODEL_DOF);
+        grav = rd_.G.segment(6, MODEL_DOF);
         rd_.torque_grav = rd_.W_inv * (rd_.A_inv_.bottomRows(MODEL_DOF) * (rd_.N_C * rd_.G));
         rd_.P_C = rd_.J_C_INV_T * rd_.G;
 
@@ -1083,13 +1083,13 @@ namespace WBC
         int task_dof = rd_.J_task.rows();
         rd_.J_task_T = rd_.J_task.transpose();
 
-        //Eigen::MatrixVVd B;
-        //Eigen::MatrixVVd B_inv;
+        // Eigen::MatrixVVd B;
+        // Eigen::MatrixVVd B_inv;
         Eigen::MatrixXd lambda_m;
         Eigen::MatrixXd lambda_m_inv;
         Eigen::MatrixXd J_task_inv_m_T;
         Eigen::MatrixXd Q_m, Q_m_T, Q_m_temp, Q_m_temp_inv;
-        
+
         lambda_m.resize(task_dof, task_dof);
         lambda_m_inv.resize(task_dof, task_dof);
         J_task_inv_m_T.resize(task_dof, MODEL_DOF_VIRTUAL);
@@ -1107,22 +1107,21 @@ namespace WBC
         Eigen::MatrixXd Wi;
         Eigen::MatrixXd Wi_inv;
 
-        Wi = rd_.A_inv_.block(6,6,MODEL_DOF,MODEL_DOF); //2 types for w matrix
+        Wi = rd_.A_inv_.block(6, 6, MODEL_DOF, MODEL_DOF); // 2 types for w matrix
         Wi_inv = DyrosMath::pinv_QR(Wi);
 
         Q_m = J_task_inv_m_T.rightCols(MODEL_DOF);
         Q_m_T = Q_m.transpose();
         Q_m_temp = Q_m * Wi_inv * Q_m_T;
 
-        //cout << lambda_m_inv << endl << endl;
+        // cout << lambda_m_inv << endl << endl;
 
         Q_m_temp_inv = DyrosMath::pinv_QR(Q_m_temp);
 
         return Wi_inv * (Q_m_T * (Q_m_temp_inv * (lambda_m * f_star + J_task_inv_m_T * rd_.J_C.transpose() * Fc)));
     }
 
-
-    VectorQd ContactForceRedistributionTorqueJS(RobotData &Robot, VectorQd command_torque, double ratio, int supportFoot)//
+    VectorQd ContactForceRedistributionTorqueJS(RobotData &Robot, VectorQd command_torque, double ratio, int supportFoot) //
     {
 
         int contact_dof_ = Robot.J_C.rows();
@@ -1137,7 +1136,7 @@ namespace WBC
             Matrix3d Rotyaw = DyrosMath::rotateWithZ(-Robot.yaw);
 
             Eigen::Matrix<double, 12, 12> force_rot_yaw;
-            force_rot_yaw.setZero();     
+            force_rot_yaw.setZero();
             for (int i = 0; i < 4; i++)
             {
                 force_rot_yaw.block(i * 3, i * 3, 3, 3) = Rotyaw;
@@ -1199,9 +1198,9 @@ namespace WBC
         Vector3d P_;
         zmp_pos.setZero();
         P_.setZero();
-        
+
         Vector3d zmp_r, zmp_l;
-      
+
         zmp_l(0) = Robot.ee_[0].xpos_contact(0) + (-Robot.LF_CF_FT(4) - Robot.LF_CF_FT(0) * (Robot.ee_[0].xpos_contact(2) - Robot.ee_[0].xpos_contact(2))) / Robot.LF_CF_FT(2);
         zmp_l(1) = Robot.ee_[0].xpos_contact(1) + (Robot.LF_CF_FT(3) - Robot.LF_CF_FT(1) * (Robot.ee_[0].xpos_contact(2) - Robot.ee_[0].xpos_contact(2))) / Robot.LF_CF_FT(2);
 
@@ -1213,12 +1212,12 @@ namespace WBC
             zmp_pos(0) = (zmp_l(0) * Robot.LF_CF_FT(2) + zmp_r(0) * Robot.RF_CF_FT(2)) / (Robot.LF_CF_FT(2) + Robot.RF_CF_FT(2));
             zmp_pos(1) = (zmp_l(1) * Robot.LF_CF_FT(2) + zmp_r(1) * Robot.RF_CF_FT(2)) / (Robot.LF_CF_FT(2) + Robot.RF_CF_FT(2));
         }
-        else if (Robot.ee_[0].contact) //left contact
+        else if (Robot.ee_[0].contact) // left contact
         {
             zmp_pos(0) = zmp_l(0);
             zmp_pos(1) = zmp_l(1);
         }
-        else if (Robot.ee_[1].contact) //right contact
+        else if (Robot.ee_[1].contact) // right contact
         {
             zmp_pos(0) = zmp_r(0);
             zmp_pos(1) = zmp_r(1);
@@ -1232,11 +1231,11 @@ namespace WBC
         contactforce.setZero(12);
 
         if (Robot.ee_[0].contact && Robot.ee_[1].contact)
-            contactforce = Robot.J_C_INV_T.block(0,6,12,MODEL_DOF) * command_torque - Robot.P_C;
+            contactforce = Robot.J_C_INV_T.block(0, 6, 12, MODEL_DOF) * command_torque - Robot.P_C;
         else if (Robot.ee_[0].contact)
-            contactforce.segment(0, 6) = (Robot.J_C_INV_T.block(0,6,6,MODEL_DOF) * command_torque - Robot.P_C).segment(0, 6);
+            contactforce.segment(0, 6) = (Robot.J_C_INV_T.block(0, 6, 6, MODEL_DOF) * command_torque - Robot.P_C).segment(0, 6);
         else if (Robot.ee_[1].contact)
-            contactforce.segment(6, 6) = (Robot.J_C_INV_T.block(0,6,6,MODEL_DOF) * command_torque - Robot.P_C).segment(0, 6);
+            contactforce.segment(6, 6) = (Robot.J_C_INV_T.block(0, 6, 6, MODEL_DOF) * command_torque - Robot.P_C).segment(0, 6);
 
         return contactforce;
     }
