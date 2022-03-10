@@ -287,6 +287,295 @@ namespace WBC
         return rd_.W_inv * (rd_.Q_T_ * (rd_.Q_temp_inv * (rd_.lambda * f_star)));
     }
 
+    VectorQd ContactTorqueQP(RobotData &rd_, VectorQd Control_Torque)
+    {
+        /*
+
+        modified axis contact force : mfc ( each contact point's z axis is piercing COM position)
+
+        minimize contact forces.
+
+
+
+
+        rotm * (rd_.J_C_INV_T.rightCols(MODEL_DOF) * control_torque + rd_.J_C_INV_T * rd_.G);
+
+
+        rd_.J_C_INV_T.rightCols(MODEL_DOF).transpose() * rotm.transpose() * rotm *rd_.J_C_INV_T.rightCols(MODEL_DOF) - 2 * rd_.J_C_INV_T * rd_.G
+
+
+
+        min mfc except z axis
+
+        s.t. zmp condition, friction condition.
+
+        H matrix :
+
+        contact condition : on/off
+        contact mode : plane, line, point
+
+
+        s. t. zmp condition :      (left_rotm.transpose(), 0; 0, right_rotm.transpose()) * rd_.J_C_INV_T.rightCols(MODEL_DOF) * (control_torue + contact_torque) + rd_.J_C_INV_T * rd_.G
+
+
+
+        contact_force = rd_.J_C_INV_T.rightCols(MODEL_DOF)*(torque_control + torque_contact) + rd_.J_C_INV_T * rd_.G;
+
+        torque_contact = Robot.qr_V2.transpose() * (Robot.J_C_INV_T.rightCols(MODEL_DOF).topRows(6) * Robot.qr_V2.transpose()).inverse() * desired_contact_force;
+
+
+
+        */
+
+        // Vector12d Fc = rd_.J_C_INV_T.rightCols(MODEL_DOF) * Control_Torque - rd_.J_C_INV_T * rd_.G;
+
+        Vector3d cpos_l, cpos_r;
+
+        cpos_l = rd_.link_[Left_Foot].rotm.transpose() * (rd_.link_[COM_id].xpos - rd_.link_[Left_Foot].xpos);
+        cpos_r = rd_.link_[Right_Foot].rotm.transpose() * (rd_.link_[COM_id].xpos - rd_.link_[Right_Foot].xpos);
+
+        Matrix3d crot_l, crot_r;
+
+        crot_r = DyrosMath::rotateWithX(-atan(cpos_r(1) / cpos_r(2))) * DyrosMath::rotateWithY(atan(cpos_r(0) / sqrt(cpos_r(1) * cpos_r(1) + cpos_r(2) * cpos_r(2))));
+
+        crot_l = DyrosMath::rotateWithX(-atan(cpos_l(1) / cpos_l(2))) * DyrosMath::rotateWithY(atan(cpos_l(0) / sqrt(cpos_l(1) * cpos_l(1) + cpos_l(2) * cpos_l(2))));
+
+        Vector3d cres_l, cres_r;
+
+        cres_l = crot_l.transpose() * cpos_l;
+
+        cres_r = crot_r.transpose() * cpos_r;
+
+        // Vector12d ContactForce;
+        Eigen::Matrix<double, 12, 12> RotM_;
+
+        RotM_.setZero();
+
+        RotM_.block(0, 0, 3, 3) = crot_l.transpose() * rd_.link_[Left_Foot].rotm.transpose();
+        RotM_.block(3, 3, 3, 3) = crot_l.transpose() * rd_.link_[Left_Foot].rotm.transpose();
+
+        RotM_.block(6, 6, 3, 3) = crot_r.transpose() * rd_.link_[Right_Foot].rotm.transpose();
+        RotM_.block(9, 9, 3, 3) = crot_r.transpose() * rd_.link_[Right_Foot].rotm.transpose();
+
+        // Vector12d COM_Rel_ContactForce;
+
+        // COM_Rel_ContactForce = RotM_ * Fc;
+
+        Eigen::Matrix<double, 12, 12> RotW;
+
+        RotW.setIdentity();
+
+        RotW(2, 2) = 0;
+        RotW(8, 8) = 0;
+
+        static CQuadraticProgram qp_torque_contact_;
+        static int contact_dof, const_num;
+
+        qp_torque_contact_.InitializeProblemSize(rd_.contact_index * 6 - 6, 0);
+
+        static MatrixXd H;
+        static VectorXd g;
+        static MatrixXd A_t;
+
+        // std::cout<<"1"<<std::endl;
+
+        MatrixXd NwJw = rd_.qr_V2.transpose() * (rd_.J_C_INV_T.rightCols(MODEL_DOF).topRows(6) * rd_.qr_V2.transpose()).inverse();
+
+        // std::cout<<"2"<<std::endl;
+        A_t = RotW * RotM_ * rd_.J_C_INV_T.rightCols(MODEL_DOF) * NwJw;
+
+        // std::cout<<"3"<<std::endl;
+        H = A_t.transpose() * A_t;
+
+        // std::cout<<"4"<<std::endl;
+        g = (RotW * RotM_ * (rd_.J_C_INV_T.rightCols(MODEL_DOF) * Control_Torque - rd_.P_C)).transpose() * A_t;
+
+        // std::cout<<"5"<<std::endl;
+        qp_torque_contact_.UpdateMinProblem(H, g);
+
+        // std::cout<<"6"<<std::endl;
+        Eigen::VectorXd qp_result;
+
+        qp_torque_contact_.SolveQPoases(100, qp_result);
+
+        return NwJw * qp_result;
+    }
+
+    VectorQd TaskControlTorqueQP(RobotData &rd_, VectorXd f_star, bool init)
+    {
+
+        /*
+        Task Control Torque Calculation with QP
+
+
+        Task Space Dynamics : J_task_inv_T * (S_k)^T * Task_torque = Lambda * fstar + p
+
+        p = J_task_inv_T * g
+
+        Contact Force Dynamics : Fc = J_c_inv_T * Control_torque - p_c
+
+        J_c_inv_T = lambda_c * J_v * A_inv
+
+        p_c = J_c_inv_T * g;
+
+
+        QP Formulation :
+
+            min qacc^T * A * qacc
+
+            subject to J_task_inv_T * (S_k)^T * task_torque = lambda * fstar
+
+            variable size : MODEL_DOF
+            constraint size : task_dof
+
+            in qpoases form,
+
+            min   0.5 * x' * H * x + x' * g
+            x
+
+            lbA < A x < ubA
+            lb < x < ub
+
+            qacc = A_inv * N_c * (s_k)^T * Torque_task; //q acceleration by task_torque //except gravity effect
+
+            S_k : [0_(dof x 6) I_(dof x dof)]
+
+            S_k can be made with :
+                Eigen::Matrix<double, MODEL_DOF, MODEL_DOF +6> S_k;
+                S_k.setZero();
+                S_k.segment(0,6,MODEL_DOF,MODEL_DOF).setIdentity();
+            or
+                S_k -> .rightCols(MODEL_DOF);
+                s_k.transpose() -> . bottomRows(MODEL_DOF);
+
+            H = (A_inv * N_c * (s_k)^T)^T * A * A_inv * N_c * (S_k)^T;
+
+            A = J_task_inv_T * (S_k)^T
+
+            lbA = lambda * fstar
+            ubA = lambda * fstar
+        */
+
+        int task_dof = rd_.J_task.rows();
+        // rd_.J_task = J_task;
+        rd_.J_task_T = rd_.J_task.transpose(); // MODEL_DOF_VIRTUAL * task_dof
+
+        // Task Control Torque;
+        rd_.J_task_T = rd_.J_task.transpose();
+
+        rd_.lambda_inv = rd_.J_task * rd_.A_inv_ * rd_.N_C * rd_.J_task_T;
+
+        rd_.lambda = rd_.lambda_inv.llt().solve(MatrixXd::Identity(task_dof, task_dof)); // task_dof * task_dof
+
+        rd_.J_task_inv_T = rd_.lambda * rd_.J_task * rd_.A_inv_ * rd_.N_C; // task_dof * MODEL_DOF_VIRTUAL
+
+        int var_size = MODEL_DOF;
+
+        int constraint_size = task_dof;
+
+        rd_.J_task_inv_T.rightCols(MODEL_DOF);
+
+        static CQuadraticProgram qp_torque_;
+
+        if (init)
+            qp_torque_.InitializeProblemSize(var_size, task_dof);
+
+        Eigen::Matrix<double, MODEL_DOF, MODEL_DOF> H_;
+
+        // rd_.J_task_inv_T.rightCols(MODEL_DOF)
+
+        H_ = (rd_.A_inv_ * rd_.N_C.rightCols(MODEL_DOF)).transpose() * rd_.N_C.rightCols(MODEL_DOF);
+
+        Eigen::MatrixXd A_qp;
+
+        A_qp.setZero(task_dof, task_dof);
+
+        A_qp = rd_.J_task_inv_T.rightCols(MODEL_DOF);
+
+        VectorXd lba, uba;
+
+        lba = rd_.lambda * f_star;
+        uba = rd_.lambda * f_star;
+
+        VectorXd g_;
+        g_.setZero(MODEL_DOF);
+
+        VectorXd lb, ub;
+
+        lb.setZero(MODEL_DOF);
+        ub.setZero(MODEL_DOF);
+
+        /*
+        ContactForce Constraint
+
+        Contact Force : COM vector modified axis base,
+
+        */
+        Vector3d cpos_l, cpos_r;
+
+        cpos_l = rd_.link_[Left_Foot].rotm.transpose() * (rd_.link_[COM_id].xpos - rd_.link_[Left_Foot].xpos);
+        cpos_r = rd_.link_[Right_Foot].rotm.transpose() * (rd_.link_[COM_id].xpos - rd_.link_[Right_Foot].xpos);
+
+        Matrix3d crot_l, crot_r;
+
+        crot_r = DyrosMath::rotateWithX(-atan(cpos_r(1) / cpos_r(2))) * DyrosMath::rotateWithY(atan(cpos_r(0) / sqrt(cpos_r(1) * cpos_r(1) + cpos_r(2) * cpos_r(2))));
+
+        crot_l = DyrosMath::rotateWithX(-atan(cpos_l(1) / cpos_l(2))) * DyrosMath::rotateWithY(atan(cpos_l(0) / sqrt(cpos_l(1) * cpos_l(1) + cpos_l(2) * cpos_l(2))));
+
+        Vector3d cres_l, cres_r;
+
+        cres_l = crot_l.transpose() * cpos_l;
+
+        cres_r = crot_r.transpose() * cpos_r;
+
+        Vector12d ContactForce;
+        Eigen::Matrix<double, 12, 12> RotM_;
+
+        RotM_.setZero();
+
+        RotM_.block(0, 0, 3, 3) = crot_l.transpose() * rd_.link_[Left_Foot].rotm.transpose();
+        RotM_.block(3, 3, 3, 3) = crot_l.transpose() * rd_.link_[Left_Foot].rotm.transpose();
+
+        RotM_.block(6, 6, 3, 3) = crot_r.transpose() * rd_.link_[Right_Foot].rotm.transpose();
+        RotM_.block(9, 9, 3, 3) = crot_r.transpose() * rd_.link_[Right_Foot].rotm.transpose();
+
+        Vector12d COM_Rel_ContactForce;
+
+        COM_Rel_ContactForce = RotM_ * ContactForce;
+
+        Eigen::Matrix<double, 12, 12> Mod_;
+
+        Mod_.setIdentity();
+
+        Mod_(2, 2) = 0;
+        Mod_(8, 8) = 0;
+
+        Eigen::Matrix<double, 12, 12> Res;
+
+        Res = RotM_.transpose() * Mod_.transpose() * Mod_ * RotM_;
+
+        // std::cout << Res << std::endl;
+
+        qp_torque_.EnableEqualityCondition(0.001);
+        qp_torque_.UpdateMinProblem(H_, g_);
+        qp_torque_.UpdateSubjectToAx(A_qp, lba, uba);
+
+        for (int i = 0; i < MODEL_DOF; i++)
+        {
+            lb(i) = -1000 / NM2CNT[i];
+
+            ub(i) = 1000 / NM2CNT[i];
+        }
+
+        qp_torque_.UpdateSubjectToX(lb, ub);
+
+        VectorXd qp_result;
+
+        qp_torque_.SolveQPoases(10, qp_result);
+
+        return qp_result;
+    }
+
     void ForceRedistributionTwoContactMod2(double eta_cust, double footlength, double footwidth, double staticFrictionCoeff, double ratio_x, double ratio_y, Eigen::Vector3d P1, Eigen::Vector3d P2, Eigen::Vector12d &F12, Eigen::Vector6d &ResultantForce, Eigen::Vector12d &ForceRedistribution, double &eta)
     {
         Eigen::Matrix6x12d W;
