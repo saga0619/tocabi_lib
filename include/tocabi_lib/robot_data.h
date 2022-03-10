@@ -106,6 +106,7 @@ struct RobotData
     // task_dof * MODEL_DOF_VIRTUAL
     MatrixXd J_task;
     MatrixXd J_task_T;
+    MatrixXd J_task_inv;
     MatrixXd J_task_inv_T;
 
     // task_dof X task_dof
