@@ -36,6 +36,10 @@ namespace WBC
         rd_.N_C = MatrixVVd::Identity() - rd_.J_C.transpose() * rd_.J_C_INV_T;
         rd_.W = rd_.A_inv_.bottomRows(MODEL_DOF) * rd_.N_C.rightCols(MODEL_DOF);
         rd_.W_inv = DyrosMath::WinvCalc(rd_.W, rd_.qr_V2);
+
+        rd_.G.setZero();
+        for (int i = 0; i < MODEL_DOF + 1; i++)
+            rd_.G -= rd_.link_[i].jac_com.cast<double>().topRows(3).transpose() * rd_.link_[i].mass * rd_.grav_ref;
     }
 
     bool GravMinMax(VectorQd torque)
@@ -215,10 +219,6 @@ namespace WBC
 
     VectorQd GravityCompensationTorque(RobotData &rd_)
     {
-        rd_.G.setZero();
-        for (int i = 0; i < MODEL_DOF + 1; i++)
-            rd_.G -= rd_.link_[i].jac_com.cast<double>().topRows(3).transpose() * rd_.link_[i].mass * rd_.grav_ref;
-
         rd_.torque_grav = rd_.W_inv * (rd_.A_inv_.bottomRows(MODEL_DOF) * (rd_.N_C * rd_.G));
         rd_.P_C = rd_.J_C_INV_T * rd_.G;
 
