@@ -69,6 +69,8 @@ typedef struct SHMmsgs
     int imu_state;
     int ft_state;
 
+    volatile bool mujoco_dist;
+
     //command val
 
     std::atomic<bool> commanding;

@@ -92,7 +92,7 @@ struct RobotData
     Eigen::VectorQd q_desired;
     Eigen::VectorQd q_dot_desired;
     Eigen::VectorQd torque_desired;
-
+    Eigen::VectorQd torque_desired_walk;
     ///////////////////////////////////////////////
     //////////////GAIN VARAIBLES///////////////////
     std::vector<double> pos_kp_v;
@@ -157,7 +157,7 @@ struct RobotData
     bool tc_init = false;
     bool tc_run = false;
     double tc_time_;
-
+    bool ankleHybrid = false; 
     bool pc_mode = false;
     bool pc_gravity = false;
     VectorQd pc_pos_des;
@@ -165,6 +165,7 @@ struct RobotData
     VectorQd pc_vel_init;
     double pc_traj_time_;
     double pc_time_;
+    bool sim_mode;
 
     //Bools...... might be moved to other..
     bool qp_error = false;
@@ -186,6 +187,8 @@ struct RobotData
     double state_ctime_total_ = 0;
     double state_ctime_avg_ = 0;
 
+
+    bool mujoco_dist = false;
     std::chrono::steady_clock::time_point rc_t_;
 
     std::chrono::steady_clock::time_point tp_state_;

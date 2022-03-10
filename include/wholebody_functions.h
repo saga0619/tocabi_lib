@@ -1193,6 +1193,54 @@ namespace WBC
         return Robot.torque_contact;
     }
 
+    Vector3d GetZMPpos_fromFT(RobotData &Robot)
+    {
+        Vector3d zmp_pos;
+        Vector3d P_;
+        zmp_pos.setZero();
+        P_.setZero();
+        
+        Vector3d zmp_r, zmp_l;
+      
+        zmp_l(0) = Robot.ee_[0].xpos_contact(0) + (-Robot.LF_CF_FT(4) - Robot.LF_CF_FT(0) * (Robot.ee_[0].xpos_contact(2) - Robot.ee_[0].xpos_contact(2))) / Robot.LF_CF_FT(2);
+        zmp_l(1) = Robot.ee_[0].xpos_contact(1) + (Robot.LF_CF_FT(3) - Robot.LF_CF_FT(1) * (Robot.ee_[0].xpos_contact(2) - Robot.ee_[0].xpos_contact(2))) / Robot.LF_CF_FT(2);
+
+        zmp_r(0) = Robot.ee_[1].xpos_contact(0) + (-Robot.RF_CF_FT(4) - Robot.RF_CF_FT(0) * (Robot.ee_[1].xpos_contact(2) - Robot.ee_[1].xpos_contact(2))) / Robot.RF_CF_FT(2);
+        zmp_r(1) = Robot.ee_[1].xpos_contact(1) + (Robot.RF_CF_FT(3) - Robot.RF_CF_FT(1) * (Robot.ee_[1].xpos_contact(2) - Robot.ee_[1].xpos_contact(2))) / Robot.RF_CF_FT(2);
+
+        if (Robot.ee_[0].contact && Robot.ee_[1].contact)
+        {
+            zmp_pos(0) = (zmp_l(0) * Robot.LF_CF_FT(2) + zmp_r(0) * Robot.RF_CF_FT(2)) / (Robot.LF_CF_FT(2) + Robot.RF_CF_FT(2));
+            zmp_pos(1) = (zmp_l(1) * Robot.LF_CF_FT(2) + zmp_r(1) * Robot.RF_CF_FT(2)) / (Robot.LF_CF_FT(2) + Robot.RF_CF_FT(2));
+        }
+        else if (Robot.ee_[0].contact) //left contact
+        {
+            zmp_pos(0) = zmp_l(0);
+            zmp_pos(1) = zmp_l(1);
+        }
+        else if (Robot.ee_[1].contact) //right contact
+        {
+            zmp_pos(0) = zmp_r(0);
+            zmp_pos(1) = zmp_r(1);
+        }
+        return (zmp_pos);
+    }
+
+    VectorXd getContactForce(RobotData &Robot, VectorQd command_torque)
+    {
+        VectorXd contactforce;
+        contactforce.setZero(12);
+
+        if (Robot.ee_[0].contact && Robot.ee_[1].contact)
+            contactforce = Robot.J_C_INV_T.block(0,6,12,MODEL_DOF) * command_torque - Robot.P_C;
+        else if (Robot.ee_[0].contact)
+            contactforce.segment(0, 6) = (Robot.J_C_INV_T.block(0,6,6,MODEL_DOF) * command_torque - Robot.P_C).segment(0, 6);
+        else if (Robot.ee_[1].contact)
+            contactforce.segment(6, 6) = (Robot.J_C_INV_T.block(0,6,6,MODEL_DOF) * command_torque - Robot.P_C).segment(0, 6);
+
+        return contactforce;
+    }
+
 }
 
 #endif
