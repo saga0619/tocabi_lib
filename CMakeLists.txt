@@ -124,6 +124,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/link.cpp
   src/qp.cpp
+  src/wholebody_functions.cpp
 )
 
 ## Add cmake target dependencies of the library
