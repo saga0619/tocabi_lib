@@ -6,6 +6,7 @@
 #include <sys/shm.h>
 #include <sys/ipc.h>
 #include <time.h>
+#include <iostream>
 
 #if defined(__x86_64) || defined(__i386)
 #define cpu_relax() __asm__("pause" :: \
