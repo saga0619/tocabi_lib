@@ -139,6 +139,8 @@ struct RobotData
     VectorVQd non_linear;
     Vector3d grav_ref;
 
+    Vector3d zmp_global_;
+
     double total_mass_ = 0;
 
     //EndEffector ee_[ENDEFFECTOR_NUMBER]; //ee_ : 0: Left 1: Right
