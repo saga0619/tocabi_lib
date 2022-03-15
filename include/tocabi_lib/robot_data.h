@@ -1,6 +1,8 @@
 #ifndef ROBOT_DATA_H
 #define ROBOT_DATA_H
 
+#define EIGEN_STACK_ALLOCATION_LIMIT 0
+
 #include <rbdl/rbdl.h>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -207,7 +209,24 @@ struct RobotData
     int count_for_inverse_total = 0;
 
 
-    ///////////////////
+    ///////////////////////////////////////////////////////////////
+    // RL Donghyeon
+    std::atomic<bool> is_action_writing_;
+    double rl_action_left_foot_[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    double rl_action_right_foot_[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    double rl_action_phase_ = 0.0;
+
+    std::atomic<bool> is_state_writing_;
+    double walking_phase_ = 0.0;
+    double left_foot_pose_lipm_[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    double right_foot_pose_lipm_[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    double left_foot_pose_rl_[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    double right_foot_pose_rl_[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    Eigen::VectorQVQd q_virtual_rl_;
+    Eigen::VectorVQd q_dot_virtual_rl_;
+
+    std::atomic<bool> is_sanity_writing_;
+    bool is_inverse_fine_{true};
 };
 
 struct DataContainer

@@ -1051,6 +1051,32 @@ namespace DyrosMath
     }
   }
 
+  static Eigen::MatrixQQd WinvCalc(const Eigen::MatrixQQd &W, Eigen::MatrixXd &V2, bool &is_inverse_fine_)
+  {
+    Eigen::ColPivHouseholderQR<Eigen::MatrixQQd> qr(W);
+    qr.setThreshold(1.0e-6);
+    int cols = W.cols();
+    int rows = W.rows();
+
+    int rank = qr.rank();
+    if ((rank == MODEL_DOF - 18) || (rank == MODEL_DOF - 12) || (rank == MODEL_DOF - 6) || (rank == MODEL_DOF))
+    {
+      Eigen::MatrixQQd Rpsinv;
+      Rpsinv.setZero();
+      Rpsinv.topLeftCorner(rank, rank) = qr.matrixQR().topLeftCorner(rank, rank).template triangularView<Eigen::Upper>().solve(Eigen::MatrixXd::Identity(rank, rank));
+      Eigen::MatrixQQd P;
+      P = qr.householderQ().transpose();
+      V2 = P.block(rank, 0, P.rows() - rank, P.cols());
+      is_inverse_fine_ = true;
+      return qr.colsPermutation() * Rpsinv * P;
+    }
+    else
+    {
+      is_inverse_fine_ = false;
+      return W;
+    }
+  }
+
   static Eigen::MatrixXd pinv_QR(const Eigen::MatrixXd &A, Eigen::MatrixXd &V2) //faster than pinv_SVD,
   {
     //FullPivHouseholderQR<MatrixXd> qr(A);

@@ -38,6 +38,16 @@ namespace WBC
         rd_.W_inv = DyrosMath::WinvCalc(rd_.W, rd_.qr_V2);
     }
 
+    static void CalcContact(RobotData &rd_, bool &is_inverse_fine_)
+    {
+        rd_.I_C.setIdentity(rd_.contact_index * 6, rd_.contact_index * 6);
+        rd_.Lambda_c = (rd_.J_C * rd_.A_inv_ * rd_.J_C.transpose()).inverse();
+        rd_.J_C_INV_T = rd_.Lambda_c * rd_.J_C * rd_.A_inv_;
+        rd_.N_C = MatrixVVd::Identity() - rd_.J_C.transpose() * rd_.J_C_INV_T;
+        rd_.W = rd_.A_inv_.bottomRows(MODEL_DOF) * rd_.N_C.rightCols(MODEL_DOF);
+        rd_.W_inv = DyrosMath::WinvCalc(rd_.W, rd_.qr_V2, is_inverse_fine_);
+    }
+
     bool GravMinMax(VectorQd torque)
     {
         static bool loading = false;
@@ -121,7 +131,54 @@ namespace WBC
         return true;
     }
 
-    void SetContact(RobotData &Robot, bool left_foot, bool right_foot, bool left_hand = 0, bool right_hand = 0)
+    // void SetContact(RobotData &Robot, bool left_foot, bool right_foot, bool left_hand = 0, bool right_hand = 0)
+    // {
+    //     Robot.ee_[0].contact = left_foot;
+    //     Robot.ee_[1].contact = right_foot;
+    //     Robot.ee_[2].contact = left_hand;
+    //     Robot.ee_[3].contact = right_hand;
+        
+    //     Robot.contact_index = 0;
+    //     if (left_foot)
+    //     {
+    //         Robot.contact_part[Robot.contact_index] = TOCABI::Left_Foot;
+    //         Robot.ee_idx[Robot.contact_index] = 0;
+    //         Robot.contact_index++;
+    //     }
+    //     if (right_foot)
+    //     {
+    //         Robot.contact_part[Robot.contact_index] = TOCABI::Right_Foot;
+    //         Robot.ee_idx[Robot.contact_index] = 1;
+    //         Robot.contact_index++;
+    //     }
+    //     if (left_hand)
+    //     {
+    //         Robot.contact_part[Robot.contact_index] = TOCABI::Left_Hand;
+    //         Robot.ee_idx[Robot.contact_index] = 2;
+    //         Robot.contact_index++;
+    //     }
+    //     if (right_hand)
+    //     {
+    //         Robot.contact_part[Robot.contact_index] = TOCABI::Right_Hand;
+    //         Robot.ee_idx[Robot.contact_index] = 3;
+    //         Robot.contact_index++;
+    //     }
+
+    //     Robot.J_C.setZero(Robot.contact_index * 6, MODEL_DOF_VIRTUAL);
+
+    //     Robot.ee_[0].SetContact(Robot.model_, Robot.q_virtual_);
+    //     Robot.ee_[1].SetContact(Robot.model_, Robot.q_virtual_);
+    //     Robot.ee_[2].SetContact(Robot.model_, Robot.q_virtual_);
+    //     Robot.ee_[3].SetContact(Robot.model_, Robot.q_virtual_);
+    //     for (int i = 0; i < Robot.contact_index; i++)
+    //     {
+    //         Robot.J_C.block(i * 6, 0, 6, MODEL_DOF_VIRTUAL) = Robot.ee_[Robot.ee_idx[i]].jac_contact.cast<double>();
+    //     }
+    //     CalcContact(Robot);
+    // }
+
+
+    static void SetContact(RobotData &Robot, bool left_foot, bool right_foot, bool left_hand = 0, bool right_hand = 0, bool is_inverse_fine=true)
     {
         Robot.ee_[0].contact = left_foot;
         Robot.ee_[1].contact = right_foot;
@@ -164,7 +221,7 @@ namespace WBC
         {
             Robot.J_C.block(i * 6, 0, 6, MODEL_DOF_VIRTUAL) = Robot.ee_[Robot.ee_idx[i]].jac_contact.cast<double>();
         }
-        CalcContact(Robot);
+        CalcContact(Robot, is_inverse_fine);
     }
 
     Vector3d GetFstarPos(LinkData &link_)
