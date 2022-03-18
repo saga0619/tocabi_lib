@@ -201,6 +201,10 @@ public:
   double cs_x_length;
   double cs_y_length;
 
+  Eigen::Vector6d contactForce;
+
+  Eigen::Vector3d zmp;
+
   double contact_force_minimum;
 
   bool contact;

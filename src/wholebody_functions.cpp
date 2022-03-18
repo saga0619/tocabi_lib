@@ -1256,7 +1256,58 @@ namespace WBC
         return Robot.torque_contact;
     }
 
-    Vector3d GetZMPpos_fromFT(RobotData &Robot)
+    Vector3d GetZMPpos_from_ContactForce(RobotData &Robot, VectorXd ContactForce)
+    {
+
+        Vector3d zmp_pos;
+        zmp_pos.setZero();
+
+        double total_fz = 0;
+
+        for (int i = 0; i < Robot.contact_index; i++)
+            total_fz = total_fz + ContactForce(2 + i * 6);
+
+        for (int i = 0; i < Robot.contact_index; i++)
+        {
+            Robot.ee_[Robot.ee_idx[i]].zmp(0) = Robot.ee_[Robot.ee_idx[i]].xpos_contact(0) + (- ContactForce(i*6+4)/ ContactForce(i*6 + 2));
+            Robot.ee_[Robot.ee_idx[i]].zmp(1) = Robot.ee_[Robot.ee_idx[i]].xpos_contact(1) + (ContactForce(i*6+3)/ ContactForce(i*6 + 2));
+            Robot.ee_[Robot.ee_idx[i]].zmp(2) = Robot.ee_[Robot.ee_idx[i]].xpos_contact(2);
+
+            zmp_pos = zmp_pos + Robot.ee_[Robot.ee_idx[i]].zmp * ContactForce(i*6+2) / total_fz;
+        }
+
+        // Vector3d zmp_pos;
+        // Vector3d P_;
+        // zmp_pos.setZero();
+        // P_.setZero();
+
+        // Vector3d zmp_r, zmp_l;
+
+        // zmp_l(0) = Robot.ee_[0].xpos_contact(0) + (-Robot.ContactForce(4) - Robot.ContactForce(0) * (Robot.ee_[0].xpos_contact(2) - Robot.ee_[0].xpos_contact(2))) / Robot.ContactForce(2);
+        // zmp_l(1) = Robot.ee_[0].xpos_contact(1) + (Robot.ContactForce(3) - Robot.ContactForce(1) * (Robot.ee_[0].xpos_contact(2) - Robot.ee_[0].xpos_contact(2))) / Robot.ContactForce(2);
+
+        // zmp_r(0) = Robot.ee_[1].xpos_contact(0) + (-Robot.ContactForce(6 + 4) - Robot.ContactForce(6) * (Robot.ee_[1].xpos_contact(2) - Robot.ee_[1].xpos_contact(2))) / Robot.ContactForce(6 + 2);
+        // zmp_r(1) = Robot.ee_[1].xpos_contact(1) + (Robot.ContactForce(6 + 3) - Robot.ContactForce(6 + 1) * (Robot.ee_[1].xpos_contact(2) - Robot.ee_[1].xpos_contact(2))) / Robot.ContactForce(6 + 2);
+
+        // if (Robot.ee_[0].contact && Robot.ee_[1].contact)
+        // {
+        //     zmp_pos(0) = (zmp_l(0) * Robot.ContactForce(2) + zmp_r(0) * Robot.ContactForce(8)) / (Robot.ContactForce(2) + Robot.ContactForce(8));
+        //     zmp_pos(1) = (zmp_l(1) * Robot.ContactForce(2) + zmp_r(1) * Robot.ContactForce(8)) / (Robot.ContactForce(2) + Robot.ContactForce(8));
+        // }
+        // else if (Robot.ee_[0].contact) // left contact
+        // {
+        //     zmp_pos(0) = zmp_l(0);
+        //     zmp_pos(1) = zmp_l(1);
+        // }
+        // else if (Robot.ee_[1].contact) // right contact
+        // {
+        //     zmp_pos(0) = zmp_r(0);
+        //     zmp_pos(1) = zmp_r(1);
+        // }
+        return (zmp_pos);
+    }
+
+    Vector3d GetZMPpos_fromFT(RobotData &Robot) // Only Left/Right
     {
         Vector3d zmp_pos;
         Vector3d P_;
@@ -1292,14 +1343,7 @@ namespace WBC
     VectorXd getContactForce(RobotData &Robot, VectorQd command_torque)
     {
         VectorXd contactforce;
-        contactforce.setZero(12);
-
-        if (Robot.ee_[0].contact && Robot.ee_[1].contact)
-            contactforce = Robot.J_C_INV_T.block(0, 6, 12, MODEL_DOF) * command_torque - Robot.P_C;
-        else if (Robot.ee_[0].contact)
-            contactforce.segment(0, 6) = (Robot.J_C_INV_T.block(0, 6, 6, MODEL_DOF) * command_torque - Robot.P_C).segment(0, 6);
-        else if (Robot.ee_[1].contact)
-            contactforce.segment(6, 6) = (Robot.J_C_INV_T.block(0, 6, 6, MODEL_DOF) * command_torque - Robot.P_C).segment(0, 6);
+        contactforce = Robot.J_C_INV_T.rightCols(MODEL_DOF)*(command_torque) - Robot.P_C;
 
         return contactforce;
     }

@@ -51,6 +51,7 @@ namespace WBC
     VectorQd newtasktorque(RobotData &rd_, VectorXd f_star, Eigen::MatrixVVd B, Eigen::MatrixVVd B_inv, VectorXd Fc);
     VectorQd ContactForceRedistributionTorqueJS(RobotData &Robot, VectorQd command_torque, double ratio, int supportFoot);
     Vector3d GetZMPpos_fromFT(RobotData &Robot);
+    Vector3d GetZMPpos_from_ContactForce(RobotData &Robot, VectorXd ContactForce);
     VectorXd getContactForce(RobotData &Robot, VectorQd command_torque);
 
 }
