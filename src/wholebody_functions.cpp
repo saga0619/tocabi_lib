@@ -198,6 +198,16 @@ namespace WBC
         return true;
     }
 
+    void ContactCalcDefault(RobotData &Robot)
+    {
+
+        Robot.ee_[0].SetContact(Robot.model_, Robot.q_virtual_);
+        Robot.ee_[1].SetContact(Robot.model_, Robot.q_virtual_);
+        Robot.ee_[2].SetContact(Robot.model_, Robot.q_virtual_);
+        Robot.ee_[3].SetContact(Robot.model_, Robot.q_virtual_);
+
+    }
+
     void SetContact(RobotData &Robot, bool left_foot, bool right_foot, bool left_hand, bool right_hand)
     {
         Robot.ee_[0].contact = left_foot;
@@ -233,10 +243,6 @@ namespace WBC
 
         Robot.J_C.setZero(Robot.contact_index * 6, MODEL_DOF_VIRTUAL);
 
-        Robot.ee_[0].SetContact(Robot.model_, Robot.q_virtual_);
-        Robot.ee_[1].SetContact(Robot.model_, Robot.q_virtual_);
-        Robot.ee_[2].SetContact(Robot.model_, Robot.q_virtual_);
-        Robot.ee_[3].SetContact(Robot.model_, Robot.q_virtual_);
         for (int i = 0; i < Robot.contact_index; i++)
         {
             Robot.J_C.block(i * 6, 0, 6, MODEL_DOF_VIRTUAL) = Robot.ee_[Robot.ee_idx[i]].jac_contact.cast<double>();

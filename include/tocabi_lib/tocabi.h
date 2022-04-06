@@ -172,6 +172,9 @@ namespace TOCABI
     const int RIGHT = 1;
 } // namespace TOCABI
 
+
+#define _MAXTORQUE 1500
+
 //static atomic
 const std::string cred("\033[0;31m");
 const std::string creset("\033[0m");

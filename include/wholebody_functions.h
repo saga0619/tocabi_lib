@@ -14,6 +14,7 @@ namespace WBC
     void CalcContact(RobotData &rd_);
     bool GravMinMax(VectorQd torque);
 
+    void ContactCalcDefault(RobotData &Robot);
     void SetContact(RobotData &Robot, bool left_foot, bool right_foot, bool left_hand = 0, bool right_hand = 0);
     
     Vector3d GetFstarPos(LinkData &link_, bool a_traj_switch = false);
