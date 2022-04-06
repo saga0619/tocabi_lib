@@ -178,10 +178,14 @@ struct RobotData
     bool data_print = false;
     bool zmp_feedback_control = false;
     bool positionHoldSwitch = false;
+    bool positionControlSwitch = false;
     bool check = false;
     bool qp2nd = false;
     bool signal_yaw_init = false;
     volatile bool firstCalc = false;
+
+    bool torqueLimitWarning = false;
+    bool torqueLimitCritical = false;
 
     bool semode = false;
     bool semode_init = false;
@@ -251,7 +255,6 @@ struct DataContainer
     bool stateEstimateSwitch = false;
     bool safetyResetSwitch = false;
 
-    bool positionControlSwitch = false;
 
     bool useSimVirtual = false;
 

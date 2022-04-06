@@ -23,6 +23,84 @@ namespace WBC
         rd_.ee_[3].InitializeEE(rd_.link_[TOCABI::Right_Hand], 0.02, 0.02, 40, 0.2, 0.2);
     }
 
+    void CheckTorqueLimit(RobotData &rd_, VectorQd command_torque)
+    {
+        double warn_percentage = 0.8;
+        double max_percentage = 0.99;
+
+        if (rd_.torqueLimitWarning)
+        {
+        }
+        else
+        {
+        }
+
+        if (rd_.torqueLimitCritical)
+        {
+        }
+        else
+        {
+        }
+
+        bool torque_warn[MODEL_DOF] = {false};
+        bool torque_ciritical[MODEL_DOF] = {false};
+
+        for (int i = 0; i < MODEL_DOF; i++)
+        {
+            if (command_torque(i) > 1000 / NM2CNT[i] * max_percentage)
+            {
+                torque_warn[i] = true;
+            }
+
+            if (command_torque(i) > 1000 / NM2CNT[i] * warn_percentage)
+            {
+                torque_ciritical[i] = true;
+            }
+        }
+
+        bool all_warn = false;
+        bool all_critical = false;
+
+        for (int i = 0; i < MODEL_DOF; i++)
+        {
+            all_warn = all_warn || torque_warn[i];
+            all_critical = all_critical || torque_ciritical[i];
+        }
+
+        if (torque_ciritical)
+        {
+
+            if (all_warn)
+            {
+                if (all_critical)
+                {
+                    if (!rd_.torqueLimitCritical)
+                    {
+                        std::cout << " Torque Critical, over 100 percent" << std::endl;
+                        rd_.positionControlSwitch = true;
+
+                        rd_.torqueLimitCritical = true;
+                    }
+                }
+                else
+                {
+                    rd_.torqueLimitCritical = false;
+
+                    if (!rd_.torqueLimitWarning)
+                    {
+                        std::cout << " Torque Warning, over 80 percent" << std::endl;
+                        rd_.torqueLimitWarning = true;
+                    }
+                }
+            }
+            else
+            {
+                rd_.torqueLimitWarning = false;
+                rd_.torqueLimitCritical = false;
+            }
+        }
+    }
+
     void CalcContact(RobotData &rd_)
     {
         rd_.I_C.setIdentity(rd_.contact_index * 6, rd_.contact_index * 6);
@@ -166,12 +244,21 @@ namespace WBC
         CalcContact(Robot);
     }
 
-    Vector3d GetFstarPos(LinkData &link_)
+    Vector3d GetFstarPos(LinkData &link_, bool a_traj_switch)
     {
         Vector3d fstar;
 
-        for (int i = 0; i < 3; i++)
-            fstar(i) = link_.pos_p_gain(i) * (link_.x_traj(i) - link_.xpos(i)) + link_.pos_d_gain(i) * (link_.v_traj(i) - link_.v(i));
+        if (a_traj_switch)
+        {
+            for (int i = 0; i < 3; i++)
+                fstar(i) = link_.a_traj(i) + link_.pos_p_gain(i) * (link_.x_traj(i) - link_.xpos(i)) + link_.pos_d_gain(i) * (link_.v_traj(i) - link_.v(i));
+        }
+        else
+        {
+
+            for (int i = 0; i < 3; i++)
+                fstar(i) = link_.pos_p_gain(i) * (link_.x_traj(i) - link_.xpos(i)) + link_.pos_d_gain(i) * (link_.v_traj(i) - link_.v(i));
+        }
 
         return fstar;
     }
@@ -194,11 +281,11 @@ namespace WBC
         return fstar;
     }
 
-    Vector6d GetFstar6d(LinkData &link_)
+    Vector6d GetFstar6d(LinkData &link_, bool a_traj_switch)
     {
         Vector6d f_star;
 
-        f_star.segment(0, 3) = GetFstarPos(link_);
+        f_star.segment(0, 3) = GetFstarPos(link_, a_traj_switch);
         f_star.segment(3, 3) = GetFstarRot(link_);
 
         return f_star;
@@ -1269,11 +1356,11 @@ namespace WBC
 
         for (int i = 0; i < Robot.contact_index; i++)
         {
-            Robot.ee_[Robot.ee_idx[i]].zmp(0) = Robot.ee_[Robot.ee_idx[i]].xpos_contact(0) + (- ContactForce(i*6+4)/ ContactForce(i*6 + 2));
-            Robot.ee_[Robot.ee_idx[i]].zmp(1) = Robot.ee_[Robot.ee_idx[i]].xpos_contact(1) + (ContactForce(i*6+3)/ ContactForce(i*6 + 2));
+            Robot.ee_[Robot.ee_idx[i]].zmp(0) = Robot.ee_[Robot.ee_idx[i]].xpos_contact(0) + (-ContactForce(i * 6 + 4) / ContactForce(i * 6 + 2));
+            Robot.ee_[Robot.ee_idx[i]].zmp(1) = Robot.ee_[Robot.ee_idx[i]].xpos_contact(1) + (ContactForce(i * 6 + 3) / ContactForce(i * 6 + 2));
             Robot.ee_[Robot.ee_idx[i]].zmp(2) = Robot.ee_[Robot.ee_idx[i]].xpos_contact(2);
 
-            zmp_pos = zmp_pos + Robot.ee_[Robot.ee_idx[i]].zmp * ContactForce(i*6+2) / total_fz;
+            zmp_pos = zmp_pos + Robot.ee_[Robot.ee_idx[i]].zmp * ContactForce(i * 6 + 2) / total_fz;
         }
 
         // Vector3d zmp_pos;
@@ -1343,7 +1430,7 @@ namespace WBC
     VectorXd getContactForce(RobotData &Robot, VectorQd command_torque)
     {
         VectorXd contactforce;
-        contactforce = Robot.J_C_INV_T.rightCols(MODEL_DOF)*(command_torque) - Robot.P_C;
+        contactforce = Robot.J_C_INV_T.rightCols(MODEL_DOF) * (command_torque)-Robot.P_C;
 
         return contactforce;
     }
