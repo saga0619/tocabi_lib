@@ -45,15 +45,15 @@ namespace Eigen
   typedef Matrix<lScalar, MODEL_DOF_VIRTUAL, 1> VectorVQf;
   typedef Matrix<lScalar, MODEL_DOF, 1> VectorQf;
 
-  //typedef SparseMatrix<lScalar, 6, MODEL_DOF_VIRTUAL> sp
+  // typedef SparseMatrix<lScalar, 6, MODEL_DOF_VIRTUAL> sp
 
   EIGEN_MAKE_TYPEDEFS(rScalar, d, 5, 5)
   EIGEN_MAKE_TYPEDEFS(rScalar, d, 6, 6)
   EIGEN_MAKE_TYPEDEFS(rScalar, d, 7, 7)
   EIGEN_MAKE_TYPEDEFS(rScalar, d, 8, 8)
-  //EIGEN_MAKE_TYPEDEFS(rScalar, d, MODEL_DOF, MODEL_DOF)
-  //EIGEN_MAKE_TYPEDEFS(rScalar, d, MODEL_DOF_VIRTUAL, MODEL_DOF_VIRTUAL)
-  //EIGEN_MAKE_TYPEDEFS(rScalar, d, MODEL_DOF_QVIRTUAL, MODEL_DOF_QVIRTUAL)
+  // EIGEN_MAKE_TYPEDEFS(rScalar, d, MODEL_DOF, MODEL_DOF)
+  // EIGEN_MAKE_TYPEDEFS(rScalar, d, MODEL_DOF_VIRTUAL, MODEL_DOF_VIRTUAL)
+  // EIGEN_MAKE_TYPEDEFS(rScalar, d, MODEL_DOF_QVIRTUAL, MODEL_DOF_QVIRTUAL)
 
   // typedef Transform<rScalar, 3, Eigen::Isometry> HTransform;  // typedef Transform< double, 3,  > 	Eigen::3d
 
@@ -64,7 +64,7 @@ namespace Eigen
   typedef Matrix<rScalar, 6, 7> Matrix6x7d;
   typedef Matrix<rScalar, 8, 4> Matrix8x4d;
   typedef Matrix<rScalar, -1, 1, 0, MAX_DOF, 1> VectorJXd;
-  typedef Matrix<rScalar, -1, 1, 0, 12, 1> VectorLXd; //Leg IK
+  typedef Matrix<rScalar, -1, 1, 0, 12, 1> VectorLXd; // Leg IK
   typedef Matrix<rScalar, -1, -1, 0, MAX_DOF, MAX_DOF> MatrixJXd;
 
   typedef Matrix<rScalar, MODEL_DOF_VIRTUAL, MODEL_DOF_VIRTUAL> MatrixVVd;
@@ -97,7 +97,7 @@ namespace Eigen
   typedef Matrix<rScalar, MODEL_DOF_VIRTUAL, MODEL_DOF_VIRTUAL> MatrixVQVQd;
   typedef Matrix<rScalar, 3, MODEL_DOF> Matrix3Qd;
 
-  //Complex
+  // Complex
   typedef Matrix<std::complex<double>, 8, 4> Matrix8x4cd;
 
 } // namespace Eigen
@@ -105,8 +105,8 @@ namespace Eigen
 namespace DyrosMath
 {
 
-  //constexpr double GRAVITY {9.80665};
-  //constexpr double DEG2RAD {};
+  // constexpr double GRAVITY {9.80665};
+  // constexpr double DEG2RAD {};
 
   static Eigen::Matrix3d skm(Eigen::Vector3d x)
   {
@@ -330,9 +330,9 @@ namespace DyrosMath
     else
       beta = 180 * DEG2RAD - beta;
 
-    angle(0) = atan2(Rot(2, 1), Rot(2, 2) + 1E-37); //roll
-    angle(2) = atan2(Rot(1, 0), Rot(0, 0) + 1E-37); //pitch
-    angle(1) = beta;                                //yaw
+    angle(0) = atan2(Rot(2, 1), Rot(2, 2) + 1E-37); // roll
+    angle(2) = atan2(Rot(1, 0), Rot(0, 0) + 1E-37); // pitch
+    angle(1) = beta;                                // yaw
 
     return angle;
   }
@@ -361,12 +361,12 @@ namespace DyrosMath
 
   static Eigen::Matrix3d Euler2rot_tf(Eigen::Vector3d eulr)
   {
-    //tf2::Quaternion q(eulr(2), eulr(1), eulr(0));
-    //tf2::Matrix3x3 m(q);
+    // tf2::Quaternion q(eulr(2), eulr(1), eulr(0));
+    // tf2::Matrix3x3 m(q);
 
     Eigen::Matrix3d Mat_temp;
 
-    //tf2::
+    // tf2::
     return Mat_temp;
   }
 
@@ -825,7 +825,7 @@ namespace DyrosMath
     int cols, rows;
     cols = A.cols();
     rows = A.rows();
-    //std::cout << "Rank : " << rank << std::endl;
+    // std::cout << "Rank : " << rank << std::endl;
     if (rank == 0)
     {
       std::cout << "WARN: pinvQRs rank 0" << std::endl;
@@ -850,7 +850,18 @@ namespace DyrosMath
     }
   }
 
-  static Eigen::MatrixXd pinv_QR(const Eigen::MatrixXd &A) //faster than pinv_SVD,
+  static Eigen::MatrixXd pinv_COD(const Eigen::MatrixXd &A)
+  {
+    Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd> cod(A.rows(), A.cols());
+
+    cod.setThreshold(10e-6);
+
+    cod.compute(A);
+
+    return cod.pseudoInverse();
+  }
+
+  static Eigen::MatrixXd pinv_QR(const Eigen::MatrixXd &A) // faster than pinv_SVD,
   {
     Eigen::ColPivHouseholderQR<Eigen::MatrixXd> qr(A);
     qr.setThreshold(10e-6);
@@ -885,7 +896,7 @@ namespace DyrosMath
     }
   }
 
-  static Eigen::MatrixXd pinv_QR_prev(const Eigen::MatrixXd &A) //faster than pinv_SVD,
+  static Eigen::MatrixXd pinv_QR_prev(const Eigen::MatrixXd &A) // faster than pinv_SVD,
   {
     Eigen::ColPivHouseholderQR<Eigen::MatrixXd> qr(A);
     qr.setThreshold(10e-6);
@@ -982,7 +993,7 @@ namespace DyrosMath
   static std::pair<Eigen::MatrixXd, Eigen::MatrixXd> pinv_QR_pair(Eigen::MatrixXd &A)
   {
     Eigen::ColPivHouseholderQR<Eigen::MatrixXd> qr(A);
-    //qr.setThreshold(10e-10);
+    // qr.setThreshold(10e-10);
     int rank = qr.rank();
 
     int cols, rows;
@@ -1042,6 +1053,24 @@ namespace DyrosMath
       Eigen::MatrixQQd P;
       P = qr.householderQ().transpose();
       V2 = P.block(rank, 0, P.rows() - rank, P.cols());
+
+      // Eigen::MatrixXd cp(qr.colsPermutation());
+
+      // std::cout << "input " << std::endl
+      //           << W << std::endl
+      //           << std::endl;
+
+      // std::cout << "cd " << std::endl
+      //           << cp << std::endl
+      //           << std::endl;
+
+      // std::cout << "rpsinv" << std::endl
+      //           << Rpsinv << std::endl
+      //           << std::endl;
+
+      // std::cout << "P" << std::endl
+      //           << P << std::endl<< std::endl;
+
       return qr.colsPermutation() * Rpsinv * P;
     }
     else
@@ -1051,12 +1080,29 @@ namespace DyrosMath
     }
   }
 
-  static Eigen::MatrixXd pinv_QR(const Eigen::MatrixXd &A, Eigen::MatrixXd &V2) //faster than pinv_SVD,
+  static Eigen::MatrixXd pinv_COD(const Eigen::MatrixXd &A, Eigen::MatrixXd &V2)
   {
-    //FullPivHouseholderQR<MatrixXd> qr(A);
-    //qr.compute(A);
-    //qr.setThreshold(10e-10);
-    //return qr.inverse();
+    Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd> cod(A.rows(), A.cols());
+
+    cod.setThreshold(1.0e-6);
+
+    cod.compute(A);
+
+    int rank = cod.rank();
+
+    Eigen::MatrixXd vtemp = cod.householderQ().transpose(); 
+    
+    V2 = vtemp.block(rank,0,A.rows() - rank, A.cols());
+
+    return cod.pseudoInverse();
+  } 
+
+  static Eigen::MatrixXd pinv_QR(const Eigen::MatrixXd &A, Eigen::MatrixXd &V2) // faster than pinv_SVD,
+  {
+    // FullPivHouseholderQR<MatrixXd> qr(A);
+    // qr.compute(A);
+    // qr.setThreshold(10e-10);
+    // return qr.inverse();
 
     Eigen::ColPivHouseholderQR<Eigen::MatrixXd> qr(A);
 
@@ -1096,8 +1142,8 @@ namespace DyrosMath
 
         V2 = P.block(rank, 0, P.rows() - rank, P.cols());
 
-        //cols -> cols * cols
-        //V2 = qr.colsPermutation().block(rank,0,cols - rank, rows - rank)
+        // cols -> cols * cols
+        // V2 = qr.colsPermutation().block(rank,0,cols - rank, rows - rank)
 
         return qr.colsPermutation() * Rpsinv2 * P;
       }
@@ -1239,33 +1285,33 @@ namespace DyrosMath
       return rotation_0;
     }
     double tau = cubic(time, time_0, time_f, 0, 1, 0, 0);
-    //Eigen::Matrix3d rot_scaler_skew;
-    //rot_scaler_skew = (rotation_0.transpose() * rotation_f).log();
-    //rot_scaler_skew = rot_scaler_skew.log();
+    // Eigen::Matrix3d rot_scaler_skew;
+    // rot_scaler_skew = (rotation_0.transpose() * rotation_f).log();
+    // rot_scaler_skew = rot_scaler_skew.log();
     /*
-		Eigen::Matrix3d rotation_exp;
-		Eigen::Vector3d a1, b1, c1, r1;
-		r1(0) = rotation_temp(2,1);
-		r1(1) = rotation_temp(0,2);
-		r1(2) = rotation_temp(1,0);
-		c1.setZero(); // angular velocity at t0 --> Zero
-		b1.setZero(); // angular acceleration at t0 --> Zero
-		a1 = r1 - b1 - c1;
-		//double tau = (time - time_0) / (time_f-time_0);
-		double tau2 = tau*tau;
-		double tau3 = tau2*tau;
-		//Eigen::Vector3d exp_vector = (a1*tau3+b1*tau2+c1*tau);
-		Eigen::Vector3d exp_vector = (a1*tau);
-		rotation_exp.setZero();
-		rotation_exp(0,1) = -exp_vector(2);
-		rotation_exp(0,2) =  exp_vector(1);
-		rotation_exp(1,0) =  exp_vector(2);
-		rotation_exp(1,2) = -exp_vector(0);
-		rotation_exp(2,0) = -exp_vector(1);
-		rotation_exp(2,1) =  exp_vector(0);
-		*/
-    //Eigen::Matrix3d result = rotation_0 * rotation_exp.exp();
-    //Eigen::Matrix3d result = rotation_0 * (rot_scaler_skew * tau).exp();
+    Eigen::Matrix3d rotation_exp;
+    Eigen::Vector3d a1, b1, c1, r1;
+    r1(0) = rotation_temp(2,1);
+    r1(1) = rotation_temp(0,2);
+    r1(2) = rotation_temp(1,0);
+    c1.setZero(); // angular velocity at t0 --> Zero
+    b1.setZero(); // angular acceleration at t0 --> Zero
+    a1 = r1 - b1 - c1;
+    //double tau = (time - time_0) / (time_f-time_0);
+    double tau2 = tau*tau;
+    double tau3 = tau2*tau;
+    //Eigen::Vector3d exp_vector = (a1*tau3+b1*tau2+c1*tau);
+    Eigen::Vector3d exp_vector = (a1*tau);
+    rotation_exp.setZero();
+    rotation_exp(0,1) = -exp_vector(2);
+    rotation_exp(0,2) =  exp_vector(1);
+    rotation_exp(1,0) =  exp_vector(2);
+    rotation_exp(1,2) = -exp_vector(0);
+    rotation_exp(2,0) = -exp_vector(1);
+    rotation_exp(2,1) =  exp_vector(0);
+    */
+    // Eigen::Matrix3d result = rotation_0 * rotation_exp.exp();
+    // Eigen::Matrix3d result = rotation_0 * (rot_scaler_skew * tau).exp();
     Eigen::AngleAxisd ang_diff(rotation_f * rotation_0.transpose());
     Eigen::Matrix3d diff_m;
     diff_m = Eigen::AngleAxisd(ang_diff.angle() * tau, ang_diff.axis());
@@ -1344,7 +1390,7 @@ namespace DyrosMath
     else
       return val;
   }
-  
+
   static int minmax_cut(int val, int min_, int max_)
   {
     if (val < min_)
@@ -1498,17 +1544,17 @@ namespace DyrosMath
 
       if (abs(a1) > 1000)
       {
-        //std::cout << "a1 over " << a1 << std::endl;
+        // std::cout << "a1 over " << a1 << std::endl;
         v1(0) = p1(0);
 
-        //std::cout << "a2 : " << a2 << "  b2 : " << b2 << std::endl;
+        // std::cout << "a2 : " << a2 << "  b2 : " << b2 << std::endl;
         v1(1) = a2 * v1(0) + b2;
       }
       else if (abs(a2) > 1000)
       {
-        //std::cout << "a2 over " << a2 << std::endl;
+        // std::cout << "a2 over " << a2 << std::endl;
         v1(0) = q1(0);
-        //std::cout << "a1 : " << a1 << "  b1 : " << b1 << std::endl;
+        // std::cout << "a1 : " << a1 << "  b1 : " << b1 << std::endl;
         v1(1) = a1 * v1(0) + b1;
       }
       else
@@ -1562,11 +1608,11 @@ namespace DyrosMath
 
   static int sign(double value)
   {
-    if(value > 0.0)
+    if (value > 0.0)
     {
       return 1;
     }
-    else if(value < 0.0)
+    else if (value < 0.0)
     {
       return -1;
     }

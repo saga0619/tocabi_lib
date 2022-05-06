@@ -108,7 +108,9 @@ namespace WBC
         rd_.J_C_INV_T = rd_.Lambda_c * rd_.J_C * rd_.A_inv_;
         rd_.N_C = MatrixVVd::Identity() - rd_.J_C.transpose() * rd_.J_C_INV_T;
         rd_.W = rd_.A_inv_.bottomRows(MODEL_DOF) * rd_.N_C.rightCols(MODEL_DOF);
-        rd_.W_inv = DyrosMath::WinvCalc(rd_.W, rd_.qr_V2);
+        // rd_.W_inv = DyrosMath::WinvCalc(rd_.W, rd_.qr_V2);
+
+        rd_.W_inv = DyrosMath::pinv_COD(rd_.W, rd_.qr_V2);
 
         rd_.G.setZero();
         for (int i = 0; i < MODEL_DOF + 1; i++)
@@ -366,7 +368,7 @@ namespace WBC
         rd_.Q_temp = rd_.Q * rd_.W_inv * rd_.Q_T_;
         // std::cout<<"2"<<std::endl;
 
-        rd_.Q_temp_inv = DyrosMath::pinv_QR(rd_.Q_temp);
+        rd_.Q_temp_inv = DyrosMath::pinv_COD(rd_.Q_temp);
 
         // DyrosMath::dc_inv_QR(rd_.J_task)
 
