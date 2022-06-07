@@ -721,9 +721,9 @@ namespace WBC
 
         for (int i = 0; i < MODEL_DOF; i++)
         {
-            lb(i) = -1000 / NM2CNT[i];
+            lb(i) = -1000 / NM2CNT[i] - rd_.torque_grav[i];
 
-            ub(i) = 1000 / NM2CNT[i];
+            ub(i) = 1000 / NM2CNT[i] - rd_.torque_grav[i];
         }
 
         qp_torque_.UpdateSubjectToX(lb, ub);
