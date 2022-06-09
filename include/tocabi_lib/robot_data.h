@@ -1,6 +1,7 @@
 #ifndef ROBOT_DATA_H
 #define ROBOT_DATA_H
 
+// #define EIGEN_STACK_ALLOCATION_LIMIT 0
 #include <rbdl/rbdl.h>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
