@@ -207,7 +207,6 @@ namespace WBC
         Robot.ee_[1].SetContact(Robot.model_, Robot.q_virtual_);
         Robot.ee_[2].SetContact(Robot.model_, Robot.q_virtual_);
         Robot.ee_[3].SetContact(Robot.model_, Robot.q_virtual_);
-
     }
 
     void SetContact(RobotData &Robot, bool left_foot, bool right_foot, bool left_hand, bool right_hand)
@@ -259,7 +258,7 @@ namespace WBC
         if (a_traj_switch)
         {
             for (int i = 0; i < 3; i++)
-                fstar(i) = link_.a_traj(i) + link_.pos_p_gain(i) * (link_.x_traj(i) - link_.xpos(i)) + link_.pos_d_gain(i) * (link_.v_traj(i) - link_.v(i));
+                fstar(i) = link_.pos_a_gain(i) * link_.a_traj(i) + link_.pos_p_gain(i) * (link_.x_traj(i) - link_.xpos(i)) + link_.pos_d_gain(i) * (link_.v_traj(i) - link_.v(i));
         }
         else
         {
