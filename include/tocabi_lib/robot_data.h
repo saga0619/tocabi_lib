@@ -15,6 +15,8 @@
 #include "tocabi_msgs/TaskCommandQue.h"
 #include "tocabi_msgs/TaskCommand.h"
 
+#include "dwbc/dwbc.h"
+
 using namespace std;
 
 // RobotData only contains Robot kinematics Data.
@@ -42,21 +44,24 @@ struct EndEffector
     bool contact = false;
 }; */
 
-struct RobotData
+class RobotData : public DWBC::RobotData
 {
+public:
     ~RobotData() { std::cout << "rd terminate" << std::endl; }
+    //
+
     /////////////////////////////////////////////////
     ///////////REFRESHING VARIABLES START////////////
 
-    std::atomic<float> control_time_;
+    // std::atomic<float> control_time_;
     std::atomic<int64_t> control_time_us_;
 
-    RigidBodyDynamics::Model model_;
-    LinkData link_[LINK_NUMBER + 1];
-    EndEffector ee_[ENDEFFECTOR_NUMBER];
+    // RigidBodyDynamics::Model model_;
+    // LinkData link_[LINK_NUMBER + 1];
+    // EndEffector ee_[ENDEFFECTOR_NUMBER];
 
-    Eigen::MatrixVVd A_;
-    Eigen::MatrixVVd A_inv_;
+    // Eigen::MatrixVVd A_;
+    // Eigen::MatrixVVd A_inv_;
     Eigen::MatrixVVd Motor_inertia;
     Eigen::MatrixVVd Motor_inertia_inverse;
 
@@ -84,8 +89,8 @@ struct RobotData
 
     Eigen::Matrix6Vd CMM;
 
-    Eigen::Vector6d LF_FT, RF_FT;       //f/t data with local sensor frame
-    Eigen::Vector6d LF_CF_FT, RF_CF_FT; //f/t data with global rotation frame
+    Eigen::Vector6d LF_FT, RF_FT;       // f/t data with local sensor frame
+    Eigen::Vector6d LF_CF_FT, RF_CF_FT; // f/t data with global rotation frame
 
     ///////////////////////////////////////////////
     ///////////REFRESHING VARIABLES END////////////
@@ -104,36 +109,37 @@ struct RobotData
     ///////////////////////////
     /////Dynamics Data
 
+    // double total_mass_ = 0;
     // task_dof * MODEL_DOF_VIRTUAL
-    MatrixXd J_task;
-    MatrixXd J_task_T;
-    MatrixXd J_task_inv;
-    MatrixXd J_task_inv_T;
+    // MatrixXd J_task;
+    // MatrixXd J_task_T;
+    // MatrixXd J_task_inv;
+    // MatrixXd J_task_inv_T;
 
     // task_dof X task_dof
-    MatrixXd lambda_inv;
-    MatrixXd lambda;
-    MatrixXd Q;
-    MatrixXd Q_T_;
-    MatrixXd Q_temp;
-    MatrixXd Q_temp_inv;
+    // MatrixXd lambda_inv;
+    // MatrixXd lambda;
+    // MatrixXd Q;
+    // MatrixXd Q_T_;
+    // MatrixXd Q_temp;
+    // MatrixXd Q_temp_inv;
 
-    //contact_dof * MODEL_DOF_VIRTUAL
-    MatrixXd J_C;
-    MatrixXd J_C_INV_T;
+    // contact_dof * MODEL_DOF_VIRTUAL
+    // MatrixXd J_C;
+    // MatrixXd J_C_INV_T;
 
-    MatrixXd I_C;
+    // MatrixXd I_C;
 
-    MatrixVVd N_C;
-    MatrixQQd W, W_inv;
-    MatrixXd Lambda_c;
-    MatrixXd qr_V2;
+    // MatrixVVd N_C;
+    // MatrixQQd W, W_inv;
+    // MatrixXd Lambda_c;
+    // MatrixXd qr_V2;
 
-    VectorVQd G;
-    MatrixXd P_C;
+    // VectorVQd G;
+    // MatrixXd P_C;
 
-    VectorQd torque_grav;
-    VectorQd torque_contact;
+    // VectorQd torque_grav;
+    // VectorQd torque_contact;
 
     Vector12d fc_redist_;
 
@@ -142,9 +148,7 @@ struct RobotData
 
     Vector3d zmp_global_;
 
-    double total_mass_ = 0;
-
-    //EndEffector ee_[ENDEFFECTOR_NUMBER]; //ee_ : 0: Left 1: Right
+    // EndEffector ee_[ENDEFFECTOR_NUMBER]; //ee_ : 0: Left 1: Right
 
     double yaw_init = 0;
 
@@ -152,7 +156,7 @@ struct RobotData
     int contact_part[4] = {-1, -1, -1, -1};
     int ee_idx[4] = {-1, -1, -1, -1};
 
-    //Task Command
+    // Task Command
     tocabi_msgs::TaskCommand tc_;
     atomic<bool> task_signal_{};
     tocabi_msgs::TaskCommandQue tc_q_;
@@ -160,7 +164,7 @@ struct RobotData
     bool tc_init = false;
     bool tc_run = false;
     double tc_time_;
-    bool ankleHybrid = false; 
+    bool ankleHybrid = false;
     bool pc_mode = false;
     bool pc_gravity = false;
     VectorQd pc_pos_des;
@@ -170,7 +174,7 @@ struct RobotData
     double pc_time_;
     bool sim_mode;
 
-    //Bools...... might be moved to other..
+    // Bools...... might be moved to other..
     bool qp_error = false;
     bool task_control_switch = false;
     bool lambda_calc = false;
@@ -194,7 +198,6 @@ struct RobotData
     double state_ctime_total_ = 0;
     double state_ctime_avg_ = 0;
 
-
     bool mujoco_dist = false;
     std::chrono::steady_clock::time_point rc_t_;
 
@@ -214,7 +217,6 @@ struct RobotData
     int count_for_inverse = 0;
     int count_for_inverse_total = 0;
 
-
     ///////////////////
 };
 
@@ -223,6 +225,11 @@ struct DataContainer
     ~DataContainer() { std::cout << "DC terminate" << std::endl; }
     ros::NodeHandle nh;
     RobotData rd_;
+
+    RobotData rd_holder_;
+
+    tlocker state_locker_;
+
 
     std::atomic<int> control_command_count{0};
     std::vector<float> Kps;
@@ -255,7 +262,6 @@ struct DataContainer
     bool imuResetSwtich = false;
     bool stateEstimateSwitch = false;
     bool safetyResetSwitch = false;
-
 
     bool useSimVirtual = false;
 

@@ -16,11 +16,62 @@
                                 : "memory")
 #endif
 
-//per link
-//Jac * 4
-//33 * 6 * 39 * 4
+// per link
+// Jac * 4
+// 33 * 6 * 39 * 4
 
 #define MODEL_DOF 33
+
+class tlocker
+{
+public:
+    tlocker()
+    {
+        counter = 0;
+    }
+    
+    void producer_lock()
+    {
+        while (lock.test_and_set(std::memory_order_acquire))
+        {
+        }
+    }
+
+    void producer_ready()
+    {
+        counter++;
+        lock.clear(std::memory_order_release);
+    }
+
+    void consumer_wait()
+    {
+        while (true)
+        {
+            if (counter > 0)
+            {
+                while (lock.test_and_set(std::memory_order_acquire))
+                {
+                }
+
+                counter--;
+                break;
+            }
+            else
+            {
+                asm("pause");
+            }
+        }
+    }
+
+    void consumer_done()
+    {
+        lock.clear(std::memory_order_release);
+    }
+
+private:
+    std::atomic_flag lock = ATOMIC_FLAG_INIT;
+    std::atomic_int8_t counter;
+};
 
 typedef struct SHMmsgs
 {
@@ -57,8 +108,8 @@ typedef struct SHMmsgs
 
     float sim_time_;
 
-    float pos_virtual[7]; //virtual pos(3) + virtual quat(4)
-    float vel_virtual[6]; //virtual vel(3) + virtual twist(3)
+    float pos_virtual[7]; // virtual pos(3) + virtual quat(4)
+    float vel_virtual[6]; // virtual vel(3) + virtual twist(3)
     float imu_acc[3];
 
     std::atomic<bool> imuWriting;
@@ -72,12 +123,12 @@ typedef struct SHMmsgs
 
     volatile bool mujoco_dist;
 
-    //command val
+    // command val
 
     std::atomic<bool> commanding;
     std::atomic<int> commandCount;
     std::atomic<int> stloopCount;
-    int commandMode[MODEL_DOF]; //command mode 0 -> off 1 -> torque 2 -> position
+    int commandMode[MODEL_DOF]; // command mode 0 -> off 1 -> torque 2 -> position
     float torqueCommand[MODEL_DOF];
     float positionCommand[MODEL_DOF];
 
@@ -95,7 +146,7 @@ typedef struct SHMmsgs
     std::atomic<bool> controllerReady;
     std::atomic<bool> reading;
     std::atomic<int> process_num;
-    volatile bool shutdown; //true for exit
+    volatile bool shutdown; // true for exit
     std::atomic<bool> emergencyOff;
     volatile bool controlModeLower;
     volatile bool controlModeUpper;
@@ -108,7 +159,6 @@ typedef struct SHMmsgs
 
     std::atomic<bool> upperTimerSet;
     std::atomic<bool> lowerTimerSet;
-
 
     float lat_avg, lat_min, lat_max, lat_dev;
     float send_avg, send_min, send_max, send_dev;
@@ -150,7 +200,7 @@ typedef struct SHMmsgs
 
 } SHMmsgs;
 
-//static SHMmsgs *shm_msgs_;
+// static SHMmsgs *shm_msgs_;
 
 static const key_t shm_msg_key = 10561;
 static const key_t shm_rd_key = 10334;

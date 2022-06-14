@@ -124,7 +124,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/link.cpp
   src/qp.cpp
-  src/wholebody_functions.cpp
+  # src/wholebody_functions.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -149,7 +149,8 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}  
+  ${catkin_LIBRARIES}
+  dwbc
 )
 
 #############

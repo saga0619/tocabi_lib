@@ -309,10 +309,10 @@ namespace WBC
 
     VectorQd GravityCompensationTorque(RobotData &rd_)
     {
-        rd_.torque_grav = rd_.W_inv * (rd_.A_inv_.bottomRows(MODEL_DOF) * (rd_.N_C * rd_.G));
-        rd_.P_C = rd_.J_C_INV_T * rd_.G;
+        rd_.torque_grav_ = rd_.W_inv * (rd_.A_inv_.bottomRows(MODEL_DOF) * (rd_.N_C * rd_.G));
+        rd_.P_C = rd_.J_C_INV_T * rd_.G_;
 
-        return rd_.torque_grav;
+        return rd_.torque_grav_;
     }
 
     VectorQd GravityCompenstationTorque_Isolated(RobotData &rd_, bool contact_left_foot_, bool contact_right_foot_)
