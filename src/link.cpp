@@ -107,7 +107,7 @@ void LinkData::SetTrajectoryLinear(double current_time, double accel_time, doubl
 
     for (int i = 0; i < 3; i++)
     {
-        double acc = (position_desired(i) - position_init(i)) / ((end_time - start_time + accel_time) * accel_time);
+        double acc = (position_desired(i) - position_init(i)) / ((end_time - start_time - accel_time) * accel_time);
         double vel_c = acc * accel_time;
 
         if (current_time < start_time)
@@ -116,13 +116,13 @@ void LinkData::SetTrajectoryLinear(double current_time, double accel_time, doubl
             v_traj(i) = 0;
             a_traj(i) = 0;
         }
-        else if (current_time >= start_time && current_time < accel_time)
+        else if (current_time >= start_time && current_time < start_time + accel_time)
         {
-            x_traj(i) = position_init(i) + acc * (current_time - start_time) * (current_time - start_time);
+            x_traj(i) = position_init(i) + 0.5 * acc * (current_time - start_time) * (current_time - start_time);
             v_traj(i) = acc * (current_time - start_time);
             a_traj(i) = acc;
         }
-        else if (current_time >= accel_time && current_time < end_time - accel_time)
+        else if (current_time >= start_time + accel_time && current_time < end_time - accel_time)
         {
             x_traj(i) = position_init(i) + acc * accel_time * accel_time / 2 + vel_c * (current_time - accel_time - start_time);
             v_traj(i) = vel_c;
@@ -130,13 +130,16 @@ void LinkData::SetTrajectoryLinear(double current_time, double accel_time, doubl
         }
         else if (current_time >= end_time - accel_time && current_time < end_time)
         {
-            x_traj(i) = position_init(i) + acc * accel_time * accel_time / 2 + vel_c * (current_time - start_time - accel_time) - acc * (current_time - end_time + accel_time) * (current_time - end_time + accel_time) * 0.5;
+            double time_frag = current_time - end_time + accel_time;
+
+            x_traj(i) = position_init(i) + acc * accel_time * accel_time / 2 + vel_c * (end_time - start_time - 2 * accel_time) + vel_c * time_frag - acc * time_frag * time_frag / 2;
+            // position_init(i) + acc * accel_time * accel_time / 2 + vel_c * (current_time - start_time - accel_time) - acc * (current_time - end_time + accel_time) * (current_time - end_time + accel_time) * 0.5;
             v_traj(i) = vel_c - acc * (current_time - (end_time - accel_time));
             a_traj(i) = -acc;
         }
         else if (current_time >= end_time)
         {
-            x_traj(i) = x_desired(i);
+            x_traj(i) = position_desired(i);
             v_traj(i) = 0;
             a_traj(i) = 0;
         }
