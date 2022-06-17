@@ -97,6 +97,52 @@ void LinkData::SetTrajectory(Eigen::Vector3d position_desired, Eigen::Vector3d v
     w_traj = rotational_velocity_desired;
 }
 
+void LinkData::SetTrajectoryLinear(double current_time, double accel_time, double start_time, double end_time)
+{
+    SetTrajectoryLinear(current_time, accel_time, start_time, end_time, x_desired, x_init);
+}
+
+void LinkData::SetTrajectoryLinear(double current_time, double accel_time, double start_time, double end_time, Eigen::Vector3d position_desired, Eigen::Vector3d position_init)
+{
+
+    for (int i = 0; i < 3; i++)
+    {
+        double acc = (position_desired(i) - position_init(i)) / ((end_time - start_time + accel_time) * accel_time);
+        double vel_c = acc * accel_time;
+
+        if (current_time < start_time)
+        {
+            x_traj(i) = position_init(i);
+            v_traj(i) = 0;
+            a_traj(i) = 0;
+        }
+        else if (current_time >= start_time && current_time < accel_time)
+        {
+            x_traj(i) = position_init(i) + acc * (current_time - start_time) * (current_time - start_time);
+            v_traj(i) = acc * (current_time - start_time);
+            a_traj(i) = acc;
+        }
+        else if (current_time >= accel_time && current_time < end_time - accel_time)
+        {
+            x_traj(i) = position_init(i) + acc * accel_time * accel_time / 2 + vel_c * (current_time - accel_time - start_time);
+            v_traj(i) = vel_c;
+            a_traj(i) = 0;
+        }
+        else if (current_time >= end_time - accel_time && current_time < end_time)
+        {
+            x_traj(i) = position_init(i) + acc * accel_time * accel_time / 2 + vel_c * (current_time - start_time - accel_time) - acc * (current_time - end_time + accel_time) * (current_time - end_time + accel_time) * 0.5;
+            v_traj(i) = vel_c - acc * (current_time - (end_time - accel_time));
+            a_traj(i) = -acc;
+        }
+        else if (current_time >= end_time)
+        {
+            x_traj(i) = x_desired(i);
+            v_traj(i) = 0;
+            a_traj(i) = 0;
+        }
+    }
+}
+
 void LinkData::SetTrajectoryQuintic(double current_time, double start_time, double end_time)
 {
     for (int j = 0; j < 3; j++)
@@ -167,6 +213,34 @@ void LinkData::SetTrajectoryQuintic(double current_time, double start_time, doub
     w_traj = Eigen::Vector3d::Zero();
 }
 
+void LinkData::SetTrajectoryCubic(double current_time, double start_time, double end_time, Eigen::Vector3d pos_init, Eigen::Vector3d vel_init, Eigen::Vector3d pos_desired, Eigen::Vector3d vel_desired)
+{
+    for (int i = 0; i < 3; i++)
+    {
+        x_traj(i) = DyrosMath::cubic(current_time, start_time, end_time, pos_init(i), pos_desired(i), vel_init(i), vel_desired(i));
+        v_traj(i) = DyrosMath::cubicDot(current_time, start_time, end_time, pos_init(i), pos_desired(i), vel_init(i), vel_desired(i));
+        a_traj(i) = DyrosMath::cubicDdot(current_time, start_time, end_time, pos_init(i), pos_desired(i), vel_init(i), vel_desired(i));
+    }
+    r_traj = rot_init;
+    w_traj = Eigen::Vector3d::Zero();
+}
+// set realtime trajectory of link from cubic spline.
+void LinkData::SetTrajectoryCubic(double current_time, double start_time, double end_time)
+{
+    SetTrajectoryCubic(current_time, start_time, end_time, x_init, v_init, x_desired, Eigen::Vector3d::Zero());
+}
+
+// set realtime trajectory of link from cubic spline.
+void LinkData::SetTrajectoryCubic(double current_time, double start_time, double end_time, Eigen::Vector3d pos_desired)
+{
+    SetTrajectoryCubic(current_time, start_time, end_time, x_init, v_init, pos_desired, Eigen::Vector3d::Zero());
+}
+// set realtime trajectory of link from cubic spline.
+void LinkData::SetTrajectoryCubic(double current_time, double start_time, double end_time, Eigen::Vector3d pos_init, Eigen::Vector3d pos_desired)
+{
+    SetTrajectoryCubic(current_time, start_time, end_time, pos_init, v_init, pos_desired, Eigen::Vector3d::Zero());
+}
+
 void LinkData::SetTrajectoryRotation(double current_time, double start_time, double end_time)
 {
     Eigen::Quaterniond q0(rot_init);
@@ -197,7 +271,7 @@ void LinkData::SetGain(double pos_p, double pos_d, double pos_a, double rot_p, d
 
 void LinkData::SetTrajectoryRotation(double current_time, double start_time, double end_time, bool local_)
 {
-    //if local_ is true, local based rotation control
+    // if local_ is true, local based rotation control
     Eigen::Vector3d axis;
     double angle;
     if (local_)
@@ -289,14 +363,14 @@ void EndEffector::SetContact(RigidBodyDynamics::Model &model_, Eigen::VectorQVQd
 {
     j_temp.setZero(6, MODEL_DOF_VIRTUAL);
 
-    //mtx_rbdl.lock();
+    // mtx_rbdl.lock();
     RigidBodyDynamics::CalcPointJacobian6D(model_, q_virtual_, id, contact_point, j_temp, false);
 
     xpos_contact = RigidBodyDynamics::CalcBodyToBaseCoordinates(model_, q_virtual_, id, contact_point, false);
 
-    //mtx_rbdl.unlock();
-    // jac_Contact.block<3,MODEL_DOF+6>(0,0)=fj_.block<3,MODEL_DOF+6>(3,0)*E_T_;
-    // jac_Contact.block<3,MODEL_DOF+6>(3,0)=fj_.block<3,MODEL_DOF+6>(0,0)*E_T_;
+    // mtx_rbdl.unlock();
+    //  jac_Contact.block<3,MODEL_DOF+6>(0,0)=fj_.block<3,MODEL_DOF+6>(3,0)*E_T_;
+    //  jac_Contact.block<3,MODEL_DOF+6>(3,0)=fj_.block<3,MODEL_DOF+6>(0,0)*E_T_;
     jac_contact.block<3, MODEL_DOF + 6>(0, 0) = j_temp.block<3, MODEL_DOF + 6>(3, 0).cast<Eigen::lScalar>();
     jac_contact.block<3, MODEL_DOF + 6>(3, 0) = j_temp.block<3, MODEL_DOF + 6>(0, 0).cast<Eigen::lScalar>();
 

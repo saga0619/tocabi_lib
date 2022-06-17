@@ -167,7 +167,7 @@ namespace DyrosMath
                          double x_f,     ///< End state
                          double x_dot_0, ///< Start state dot
                          double x_dot_f, ///< End state dot
-                         double hz       ///< control frequency
+                         int hz = 0
   )
   {
     double x_t;
@@ -193,6 +193,40 @@ namespace DyrosMath
             + 2 * (3 * total_x / total_time2 - 2 * x_dot_0 / total_time - x_dot_f / total_time) * elapsed_time
 
             + 3 * (-2 * total_x / total_time3 + (x_dot_0 + x_dot_f) / total_time2) * elapsed_time * elapsed_time;
+    }
+
+    return x_t;
+  }
+  static double cubicDdot(double time,    ///< Current time
+                         double time_0,  ///< Start time
+                         double time_f,  ///< End time
+                         double x_0,     ///< Start state
+                         double x_f,     ///< End state
+                         double x_dot_0, ///< Start state dot
+                         double x_dot_f ///< End state dot
+  )
+  {
+    double x_t;
+
+    if (time < time_0)
+    {
+      x_t = x_dot_0;
+    }
+    else if (time > time_f)
+    {
+      x_t = x_dot_f;
+    }
+    else
+    {
+      double elapsed_time = time - time_0;
+      double total_time = time_f - time_0;
+      double total_time2 = total_time * total_time;  // pow(t,2)
+      double total_time3 = total_time2 * total_time; // pow(t,3)
+      double total_x = x_f - x_0;
+
+      x_t = 2 * (3 * total_x / total_time2 - 2 * x_dot_0 / total_time - x_dot_f / total_time)
+
+            + 6 * (-2 * total_x / total_time3 + (x_dot_0 + x_dot_f) / total_time2) * elapsed_time;
     }
 
     return x_t;
@@ -1090,12 +1124,12 @@ namespace DyrosMath
 
     int rank = cod.rank();
 
-    Eigen::MatrixXd vtemp = cod.householderQ().transpose(); 
-    
-    V2 = vtemp.block(rank,0,A.rows() - rank, A.cols());
+    Eigen::MatrixXd vtemp = cod.householderQ().transpose();
+
+    V2 = vtemp.block(rank, 0, A.rows() - rank, A.cols());
 
     return cod.pseudoInverse();
-  } 
+  }
 
   static Eigen::MatrixXd pinv_QR(const Eigen::MatrixXd &A, Eigen::MatrixXd &V2) // faster than pinv_SVD,
   {
