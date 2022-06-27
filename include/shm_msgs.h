@@ -126,13 +126,13 @@ typedef struct SHMmsgs
     float low_mid_avg, low_mid_max;
     float low_snd_avg, low_snd_max;
 
-    int lat_h[20];
-    int send_h[20];
-    int rcv_h[20];
+    int lat_h[30];
+    int send_h[30];
+    int rcv_h[30];
 
-    int lat2_h[20];
-    int send2_h[20];
-    int rcv2_h[20];
+    int lat2_h[30];
+    int send2_h[30];
+    int rcv2_h[30];
 
     int low_toff;
     int upp_toff;
