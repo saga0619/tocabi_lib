@@ -190,6 +190,9 @@ public:
   void UpdateLinkData(LinkData &lk_);
   // Set Contact point, Contact jacobian
   void SetContact(RigidBodyDynamics::Model &model_, Eigen::VectorQVQd &q_virtual_);
+
+  MatrixXd GetZMPConstMatrix();
+  MatrixXd GetForceConstMatrix();
   // cartesian velocity of contact point at body
   Eigen::Vector3d v_contact;
   // cartesian velocity of contact point at body

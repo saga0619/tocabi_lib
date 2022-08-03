@@ -414,3 +414,44 @@ void EndEffector::UpdateLinkData(LinkData &lk_)
     memcpy(&jac, &lk_.jac, sizeof(Matrix6Vf));
     memcpy(&jac_com, &lk_.jac_com, sizeof(Matrix6Vf));
 }
+
+MatrixXd EndEffector::GetZMPConstMatrix()
+{
+    MatrixXd zmp_const_mat = MatrixXd::Zero(4, 6);
+
+    zmp_const_mat(0, 2) = -cs_x_length;
+    zmp_const_mat(0, 4) = -1;
+
+    zmp_const_mat(1, 2) = -cs_x_length;
+    zmp_const_mat(1, 4) = 1;
+
+    zmp_const_mat(2, 2) = -cs_y_length;
+    zmp_const_mat(2, 3) = -1;
+
+    zmp_const_mat(3, 2) = -cs_y_length;
+    zmp_const_mat(3, 3) = 1;
+
+    return zmp_const_mat;
+}
+
+MatrixXd EndEffector::GetForceConstMatrix()
+{
+    MatrixXd force_const_matrix = MatrixXd::Zero(6, 6);
+
+    force_const_matrix(0, 0) = 1.0;
+    force_const_matrix(0, 2) = -friction_ratio;
+    force_const_matrix(1, 0) = -1.0;
+    force_const_matrix(1, 2) = -friction_ratio;
+
+    force_const_matrix(2, 1) = 1.0;
+    force_const_matrix(2, 2) = -friction_ratio;
+    force_const_matrix(3, 1) = -1.0;
+    force_const_matrix(3, 2) = -friction_ratio;
+
+    force_const_matrix(4, 5) = 1.0;
+    force_const_matrix(4, 2) = -friction_ratio_z;
+    force_const_matrix(5, 5) = -1.0;
+    force_const_matrix(5, 2) = -friction_ratio_z;
+
+    return force_const_matrix;
+}

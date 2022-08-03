@@ -16,11 +16,11 @@ namespace WBC
 
     void ContactCalcDefault(RobotData &Robot);
     void SetContact(RobotData &Robot, bool left_foot, bool right_foot, bool left_hand = 0, bool right_hand = 0);
-    
+
     Vector3d GetFstarPos(LinkData &link_, bool a_traj_switch = false);
 
     Vector3d GetFstarRot(LinkData &link_);
-    
+
     Vector6d GetFstar6d(LinkData &link_, bool a_traj_switch = false);
 
     VectorQd GravityCompensationTorque(RobotData &rd_);
@@ -54,6 +54,8 @@ namespace WBC
     Vector3d GetZMPpos_fromFT(RobotData &Robot);
     Vector3d GetZMPpos_from_ContactForce(RobotData &Robot, VectorXd ContactForce);
     VectorXd getContactForce(RobotData &Robot, VectorQd command_torque);
+
+    VectorQd TaskControlHQP(RobotData &rd_, const MatrixXd &J_task, const MatrixXd &Jkt_, const VectorXd &fstar_, const VectorQd &torque_prev, const MatrixXd &prev_task_null_);
 
     void CheckTorqueLimit(RobotData &rd_, VectorQd command_torque);
 

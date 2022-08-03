@@ -129,9 +129,12 @@ struct RobotData
     MatrixXd Lambda_c;
     MatrixXd qr_V2;
 
+    MatrixXd NwJw;
+
     VectorVQd G;
     MatrixXd P_C;
 
+    VectorQd torque_limit;
     VectorQd torque_grav;
     VectorQd torque_contact;
 
