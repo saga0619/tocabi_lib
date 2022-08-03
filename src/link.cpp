@@ -30,6 +30,11 @@ void LinkData::UpdateVW(RigidBodyDynamics::Model &model_, const Eigen::VectorQVQ
 
     v = vw.segment(3, 3);
     w = vw.segment(0, 3);
+
+    vw = RigidBodyDynamics::CalcPointVelocity6D(model_, q_virtual_, q_dot_virtual_, id, model_.mBodies[id].mCenterOfMass, false);
+
+    vi = vw.segment(3, 3);
+    // wi = vwc.segment(0, 3);
 }
 
 void LinkData::GetPointPos(RigidBodyDynamics::Model &model_, const Eigen::VectorQVQd &q_virtual_, const Eigen::VectorVQd &q_dot_virtual_, Eigen::Vector3d &local_pos, Eigen::Vector3d &global_pos, Eigen::Vector6d &global_velocity6D)
@@ -87,6 +92,10 @@ void LinkData::UpdateJacobian(RigidBodyDynamics::Model &model_, const Eigen::Vec
 
     v = vw.segment(3, 3);
     w = vw.segment(0, 3);
+
+    vw = RigidBodyDynamics::CalcPointVelocity6D(model_, q_virtual_, q_dot_virtual_, id, model_.mBodies[id].mCenterOfMass, false);
+
+    vi = vw.segment(3, 3);
 }
 
 void LinkData::SetTrajectory(Eigen::Vector3d position_desired, Eigen::Vector3d velocity_desired, Eigen::Matrix3d rotation_desired, Eigen::Vector3d rotational_velocity_desired)
@@ -348,7 +357,9 @@ void LinkData::SetTrajectoryRotation(double current_time, double start_time, dou
 void LinkData::SetInitialWithPosition()
 {
     x_init = xpos;
+    xi_init = xipos;
     v_init = v;
+    vi_init = vi;
     rot_init = rotm;
     w_init = w;
     DyrosMath::rot2Euler_tf2(rotm, roll_init, pitch_init, yaw_init);

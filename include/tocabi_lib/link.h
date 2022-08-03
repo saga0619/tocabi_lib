@@ -120,6 +120,8 @@ public:
   // cartesian velocity of body
   Eigen::Vector3d v;
 
+  Eigen::Vector3d vi;
+
   // rotational velocity of body
   Eigen::Vector3d w;
 
@@ -153,6 +155,9 @@ public:
   Eigen::Vector3d v_init;
   Eigen::Matrix3d rot_init;
   Eigen::Vector3d w_init;
+
+  Eigen::Vector3d xi_init;
+  Eigen::Vector3d vi_init;
 
   Eigen::Vector3d x_init_local;
   Eigen::Vector3d v_init_local;
