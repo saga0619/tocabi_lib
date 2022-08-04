@@ -1473,11 +1473,15 @@ namespace WBC
 
     int TaskControlHQP(RobotData &rd_, TaskSpace &ts_, CQuadraticProgram &qp_h_, const VectorQd &torque_prev, const MatrixXd &prev_task_null_, bool init_trigger)
     {
-        int res = TaskControlHQP(rd_, qp_h_, ts_.J_task_, ts_.J_kt_, ts_.f_star_, ts_.Lambda_task_, torque_prev, prev_task_null_, ts_.f_star_qp_, ts_.contact_qp_, init_trigger);
-
-        ts_.torque_h_ = ts_.J_kt_ * ts_.Lambda_task_ * (ts_.f_star_ + ts_.f_star_qp_);
-
-        return res;
+        if (TaskControlHQP(rd_, qp_h_, ts_.J_task_, ts_.J_kt_, ts_.f_star_, ts_.Lambda_task_, torque_prev, prev_task_null_, ts_.f_star_qp_, ts_.contact_qp_, init_trigger))
+        {
+            ts_.torque_h_ = ts_.J_kt_ * ts_.Lambda_task_ * (ts_.f_star_ + ts_.f_star_qp_);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     int TaskControlHQP(RobotData &rd_, CQuadraticProgram &qp_h_, const MatrixXd &J_task, const MatrixXd &Jkt_, const VectorXd &fstar_, const MatrixXd lambda_task_, const VectorQd &torque_prev, const MatrixXd &prev_task_null_, VectorXd &fstar_result, VectorXd &contact_result, bool init_trigger_)
@@ -1587,6 +1591,9 @@ namespace WBC
         // qp_.EnableEqualityCondition(0.0001);
 
         VectorXd qpres;
+
+        qpres.setZero(variable_size);
+
         if (qp_h_.CheckProblemSize(variable_size, total_constraint_size))
         {
             if (init_trigger_)
@@ -1613,7 +1620,7 @@ namespace WBC
         else
         {
             std::cout << "task solve failed" << std::endl;
-            fstar_result = VectorXd::Zero(task_dof);
+            // fstar_result = VectorXd::Zero(task_dof);
 
             return 0;
         }
