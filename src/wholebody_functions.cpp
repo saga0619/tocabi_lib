@@ -1471,6 +1471,15 @@ namespace WBC
         return contactforce;
     }
 
+    int TaskControlHQP(RobotData &rd_, TaskSpace &ts_, CQuadraticProgram &qp_h_, const VectorQd &torque_prev, const MatrixXd &prev_task_null_, bool init_trigger)
+    {
+        int res = TaskControlHQP(rd_, qp_h_, ts_.J_task_, ts_.J_kt_, ts_.f_star_, ts_.Lambda_task_, torque_prev, prev_task_null_, ts_.f_star_qp_, ts_.contact_qp_, init_trigger);
+
+        ts_.torque_h_ = ts_.J_kt_ * ts_.Lambda_task_ * (ts_.f_star_ + ts_.f_star_qp_);
+
+        return res;
+    }
+
     int TaskControlHQP(RobotData &rd_, CQuadraticProgram &qp_h_, const MatrixXd &J_task, const MatrixXd &Jkt_, const VectorXd &fstar_, const MatrixXd lambda_task_, const VectorQd &torque_prev, const MatrixXd &prev_task_null_, VectorXd &fstar_result, VectorXd &contact_result, bool init_trigger_)
     {
         // return fstar & contact force;
@@ -1762,5 +1771,16 @@ namespace WBC
             torque_output = VectorXd::Zero(model_size);
             return 1;
         }
+    }
+
+    void CalcJKT(RobotData &rd_, TaskSpace &ts_)
+    {
+        ts_.Lambda_task_ = (ts_.J_task_ * rd_.A_inv_ * rd_.N_C * ts_.J_task_.transpose()).inverse();
+        MatrixXd Q = (ts_.Lambda_task_ * ts_.J_task_ * rd_.A_inv_ * rd_.N_C).rightCols(ts_.J_task_.cols() - 6);
+        ts_.J_kt_ = rd_.W_inv * Q.transpose() * DyrosMath::pinv_COD(Q * rd_.W_inv * Q.transpose());
+    }
+    void CalcTaskNull(RobotData &rd_, TaskSpace &ts_)
+    {
+        ts_.Null_task = MatrixXd::Identity(MODEL_DOF, MODEL_DOF) - ts_.J_kt_ * ts_.Lambda_task_ * ts_.J_task_ * rd_.A_inv_ * rd_.N_C.rightCols(MODEL_DOF);
     }
 }

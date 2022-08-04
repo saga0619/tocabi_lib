@@ -466,3 +466,31 @@ MatrixXd EndEffector::GetForceConstMatrix()
 
     return force_const_matrix;
 }
+
+TaskSpace::TaskSpace()
+{
+    task_dof_ = -1;
+}
+
+TaskSpace::TaskSpace(int task_dof)
+{
+    task_dof_ = task_dof;
+}
+
+void TaskSpace::Update(const MatrixXd &J_task, const VectorXd &f_star)
+{
+    int dof_jtask = J_task.rows();
+    int dof_fstar = f_star.size();
+
+    if (dof_jtask == dof_fstar)
+    {
+        J_task_ = J_task;
+        f_star_ = f_star;
+
+        task_dof_ = dof_jtask;
+    }
+    else
+    {
+        std::cout << "TASK DOF MISMATCH ERROR " << std::endl;
+    }
+}

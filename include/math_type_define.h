@@ -167,8 +167,7 @@ namespace DyrosMath
                          double x_f,     ///< End state
                          double x_dot_0, ///< Start state dot
                          double x_dot_f, ///< End state dot
-                         int hz = 0
-  )
+                         int hz = 0)
   {
     double x_t;
 
@@ -198,12 +197,12 @@ namespace DyrosMath
     return x_t;
   }
   static double cubicDdot(double time,    ///< Current time
-                         double time_0,  ///< Start time
-                         double time_f,  ///< End time
-                         double x_0,     ///< Start state
-                         double x_f,     ///< End state
-                         double x_dot_0, ///< Start state dot
-                         double x_dot_f ///< End state dot
+                          double time_0,  ///< Start time
+                          double time_f,  ///< End time
+                          double x_0,     ///< Start state
+                          double x_f,     ///< End state
+                          double x_dot_0, ///< Start state dot
+                          double x_dot_f  ///< End state dot
   )
   {
     double x_t;

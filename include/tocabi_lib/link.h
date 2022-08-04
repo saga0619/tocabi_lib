@@ -221,3 +221,26 @@ public:
 
   bool contact;
 };
+
+class TaskSpace
+{
+public:
+  int task_dof_;
+
+  MatrixXd J_task_;
+  VectorXd f_star_;
+  MatrixXd J_kt_;
+  MatrixXd Null_task;
+  MatrixXd Lambda_task_;
+  VectorXd torque_h_;
+
+  VectorXd f_star_qp_;
+  VectorXd contact_qp_;
+
+  // CQuadraticProgram hqp_;
+  
+  TaskSpace();
+  TaskSpace(int task_dof);
+
+  void Update(const MatrixXd &J_task, const VectorXd &f_star);
+};
