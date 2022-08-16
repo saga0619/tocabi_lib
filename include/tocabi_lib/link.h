@@ -129,6 +129,7 @@ public:
   Eigen::Vector6d fstar;
 
   double roll, pitch, yaw;
+  double roll_traj, pitch_traj, yaw_traj;
   double roll_init, pitch_init, yaw_init;
 
   // realtime traj of cartesian & orientation.

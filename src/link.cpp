@@ -22,6 +22,9 @@ void LinkData::UpdatePosition(RigidBodyDynamics::Model &model_, const Eigen::Vec
     xpos = RigidBodyDynamics::CalcBodyToBaseCoordinates(model_, q_virtual_, id, Eigen::Vector3d::Zero(), false);
     xipos = RigidBodyDynamics::CalcBodyToBaseCoordinates(model_, q_virtual_, id, com_position, false);
     rotm = (RigidBodyDynamics::CalcBodyWorldOrientation(model_, q_virtual_, id, false)).transpose();
+
+    DyrosMath::rot2Euler_tf2(rotm, roll, pitch, yaw);
+
 }
 
 void LinkData::UpdateVW(RigidBodyDynamics::Model &model_, const Eigen::VectorQVQd &q_virtual_, const Eigen::VectorVQd &q_dot_virtual_)
@@ -371,6 +374,9 @@ void LinkData::SetInitialWithTrajectory()
     v_init = v_traj;
     rot_init = r_traj;
     w_init = w_traj;
+
+    DyrosMath::rot2Euler_tf2(r_traj, roll_init, pitch_init, yaw_init);
+
 }
 
 void EndEffector::SetContact(RigidBodyDynamics::Model &model_, Eigen::VectorQVQd &q_virtual_)
@@ -421,6 +427,10 @@ void EndEffector::UpdateLinkData(LinkData &lk_)
     w = lk_.w;
 
     rotm = lk_.rotm;
+
+    roll = lk_.roll;
+    pitch = lk_.pitch;
+    yaw = lk_.yaw;
 
     memcpy(&jac, &lk_.jac, sizeof(Matrix6Vf));
     memcpy(&jac_com, &lk_.jac_com, sizeof(Matrix6Vf));
