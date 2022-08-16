@@ -259,6 +259,8 @@ struct DataContainer
     bool stateEstimateSwitch = false;
     bool safetyResetSwitch = false;
 
+    Vector12d qlock_des;
+    bool locklower = false;
 
     bool useSimVirtual = false;
 
