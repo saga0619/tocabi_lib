@@ -87,6 +87,9 @@ struct RobotData
     Eigen::Vector6d LF_FT, RF_FT;       //f/t data with local sensor frame
     Eigen::Vector6d LF_CF_FT, RF_CF_FT; //f/t data with global rotation frame
 
+    Eigen::Vector6d LH_FT, RH_FT;       //f/t data with local sensor frame
+    Eigen::Vector6d LH_CF_FT, RH_CF_FT; //f/t data with global rotation frame
+
     ///////////////////////////////////////////////
     ///////////REFRESHING VARIABLES END////////////
 

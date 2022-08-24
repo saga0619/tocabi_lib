@@ -67,6 +67,9 @@ typedef struct SHMmsgs
     std::atomic<bool> ftWriting;
     float ftSensor[12];
 
+    std::atomic<bool> ftWriting2;
+    float ftSensor2[12];
+
     int imu_state;
     int ft_state;
 
