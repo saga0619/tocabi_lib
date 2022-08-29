@@ -83,7 +83,7 @@ struct RobotData
 
     Eigen::Matrix6Vd CMM;
 
-    Eigen::Vector6d LF_FT, RF_FT;       //f/t data with local sensor frame
+    Eigen::Vector6d LF_FT, RF_FT, LH_FT, RH_FT;       //f/t data with local sensor frame
     Eigen::Vector6d LF_CF_FT, RF_CF_FT; //f/t data with global rotation frame
 
     ///////////////////////////////////////////////

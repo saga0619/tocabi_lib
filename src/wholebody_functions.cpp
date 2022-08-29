@@ -47,12 +47,12 @@ namespace WBC
 
         for (int i = 0; i < MODEL_DOF; i++)
         {
-            if (command_torque(i) > 1000 / NM2CNT[i] * max_percentage)
+            if (command_torque(i) > 1000 * max_percentage)
             {
                 torque_warn[i] = true;
             }
 
-            if (command_torque(i) > 1000 / NM2CNT[i] * warn_percentage)
+            if (command_torque(i) > 1000 * warn_percentage)
             {
                 torque_ciritical[i] = true;
             }

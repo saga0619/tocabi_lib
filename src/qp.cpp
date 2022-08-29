@@ -185,6 +185,7 @@ int CQuadraticProgram::SolveQPoases(const int &num_max_iter, VectorXd &solv, boo
     //_options.boundTolerance = 1E-6;
     _options.boundRelaxation = 1E-4;
     // _options.printLevel = PL_LOW;
+    // _options.printLevel = PL_DEBUG_ITER;
     _options.printLevel = PL_NONE;
 
     _QPprob.setOptions(_options);

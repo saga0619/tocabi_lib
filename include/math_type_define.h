@@ -1459,6 +1459,15 @@ namespace DyrosMath
     return res;
   }
 
+  static inline double hpf(double input, double prev_input, double prev_res, double samping_freq, double cutoff_freq)
+  {
+    double rc = 1.0 / (cutoff_freq * 2 * M_PI);
+    double dt = 1.0 / samping_freq;
+    double a = rc / (rc + dt);
+
+    return a*(prev_res + input - prev_input);
+  }
+
   static double getOrientation2d(Eigen::Vector2d p1, Eigen::Vector2d p2)
   {
     return atan2(p1(0) * p2(1) - p1(1) * p2(0), p1(0) * p2(0) + p1(1) * p2(1));
@@ -1589,6 +1598,18 @@ namespace DyrosMath
     for (int i = 0; i < N; i++)
     {
       res(i) = lpf(input(i), prev(i), samping_freq, cutoff_freq);
+    }
+    return res;
+  }
+
+  template <int N>
+  static Eigen::Matrix<double, N, 1> hpf(Eigen::Matrix<double, N, 1> input, Eigen::Matrix<double, N, 1> prev_input, Eigen::Matrix<double, N, 1> prev, double samping_freq, double cutoff_freq)
+  {
+    Eigen::Matrix<double, N, 1> res;
+
+    for (int i = 0; i < N; i++)
+    {
+      res(i) = hpf(input(i), prev_input(i), prev(i), samping_freq, cutoff_freq);
     }
     return res;
   }
