@@ -16,18 +16,19 @@ namespace WBC
 
     void ContactCalcDefault(RobotData &Robot);
     void SetContact(RobotData &Robot, bool left_foot, bool right_foot, bool left_hand = 0, bool right_hand = 0);
-    
-    Vector3d GetFstarPos(LinkData &link_, bool a_traj_switch = false);
+
+    Vector3d GetFstarPos(LinkData &link_, bool a_traj_switch = false, bool com_switch = false);
 
     Vector3d GetFstarRot(LinkData &link_);
-    
-    Vector6d GetFstar6d(LinkData &link_, bool a_traj_switch = false);
+
+    Vector6d GetFstar6d(LinkData &link_, bool a_traj_switch = false, bool com_switch = false);
 
     VectorQd GravityCompensationTorque(RobotData &rd_);
 
     VectorQd GravityCompenstationTorque_Isolated(RobotData &rd_, bool contact_left_foot_, bool contact_right_foot_);
 
     MatrixXd GetJKT1(RobotData &rd_, MatrixXd &J_task);
+    MatrixXd GetJKT1(RobotData &rd_, MatrixXd &J_task, MatrixXd &lambda);
 
     MatrixXd GetJKT2(RobotData &rd_, MatrixXd &J_task);
 
@@ -54,8 +55,17 @@ namespace WBC
     Vector3d GetZMPpos_fromFT(RobotData &Robot);
     Vector3d GetZMPpos_from_ContactForce(RobotData &Robot, VectorXd ContactForce);
     VectorXd getContactForce(RobotData &Robot, VectorQd command_torque);
+    int TaskControlHQP(RobotData &rd_, CQuadraticProgram &qp_h_, const MatrixXd &J_task, const MatrixXd &Jkt_, const VectorXd &fstar_, const MatrixXd lambda_task_, const VectorQd &torque_prev, const MatrixXd &prev_task_null_, VectorXd &fstar_result, VectorXd &contact_result, bool init_trigger_);
+    int TaskControlHQP(RobotData &rd_, TaskSpace &ts_, CQuadraticProgram &qp_h_, const VectorQd &torque_prev, const MatrixXd &prev_task_null_, bool init_trigger);
+
+    int CalcContactRedistributeHQP(RobotData &rd_, CQuadraticProgram &qp_contact_, VectorXd torque_input, VectorXd &torque_output, bool init);
 
     void CheckTorqueLimit(RobotData &rd_, VectorQd command_torque);
+
+    // MatrixXd CalcTaskNull(RobotData &rd_, const MatrixXd &Jkt_, const MatrixXd &Jtask, const MatrixXd )
+
+    void CalcJKT(RobotData &rd_, TaskSpace &ts_);
+    void CalcTaskNull(RobotData &rd_, TaskSpace &ts_);
 
 }
 

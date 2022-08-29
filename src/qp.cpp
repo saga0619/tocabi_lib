@@ -15,6 +15,19 @@ void CQuadraticProgram::Initialize()
     _num_cons = 1;
 }
 
+bool CQuadraticProgram::CheckProblemSize(int numbar, int numcons)
+{
+    if ((_num_var == numbar) && (_num_cons == numcons))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
 void CQuadraticProgram::InitializeProblemSize(const int &num_var, const int &num_cons)
 {
     _QPprob = SQProblem(num_var, num_cons);

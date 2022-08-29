@@ -1,6 +1,7 @@
 #ifndef ROBOT_DATA_H
 #define ROBOT_DATA_H
 
+// #define EIGEN_STACK_ALLOCATION_LIMIT 0
 #include <rbdl/rbdl.h>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -86,6 +87,9 @@ struct RobotData
     Eigen::Vector6d LF_FT, RF_FT, LH_FT, RH_FT;       //f/t data with local sensor frame
     Eigen::Vector6d LF_CF_FT, RF_CF_FT; //f/t data with global rotation frame
 
+    Eigen::Vector6d LH_FT, RH_FT;       //f/t data with local sensor frame
+    Eigen::Vector6d LH_CF_FT, RH_CF_FT; //f/t data with global rotation frame
+
     ///////////////////////////////////////////////
     ///////////REFRESHING VARIABLES END////////////
 
@@ -128,9 +132,12 @@ struct RobotData
     MatrixXd Lambda_c;
     MatrixXd qr_V2;
 
+    MatrixXd NwJw;
+
     VectorVQd G;
     MatrixXd P_C;
 
+    VectorQd torque_limit;
     VectorQd torque_grav;
     VectorQd torque_contact;
 
@@ -255,6 +262,8 @@ struct DataContainer
     bool stateEstimateSwitch = false;
     bool safetyResetSwitch = false;
 
+    Vector12d qlock_des;
+    bool locklower = false;
 
     bool useSimVirtual = false;
 

@@ -67,6 +67,9 @@ typedef struct SHMmsgs
     std::atomic<bool> ftWriting;
     float ftSensor[12];
 
+    std::atomic<bool> ftWriting2;
+    float ftSensor2[12];
+
     int imu_state;
     int ft_state;
 
@@ -115,10 +118,14 @@ typedef struct SHMmsgs
     float rcv_avg, rcv_min, rcv_max, rcv_dev;
     int lat_ovf, send_ovf;
 
+
     float lat_avg2, lat_min2, lat_max2, lat_dev2;
     float send_avg2, send_min2, send_max2, send_dev2;
     float rcv_avg2, rcv_min2, rcv_max2, rcv_dev2;
     int lat_ovf2, send_ovf2;
+
+    int r_us, l_us, s_us;
+    int r_us2, l_us2, s_us2;
 
     int low_rcv_ovf, low_mid_ovf, low_snd_ovf;
     int low_rcv_us, low_mid_us, low_snd_us;
@@ -126,13 +133,13 @@ typedef struct SHMmsgs
     float low_mid_avg, low_mid_max;
     float low_snd_avg, low_snd_max;
 
-    int lat_h[20];
-    int send_h[20];
-    int rcv_h[20];
+    int lat_h[30];
+    int send_h[30];
+    int rcv_h[30];
 
-    int lat2_h[20];
-    int send2_h[20];
-    int rcv2_h[20];
+    int lat2_h[30];
+    int send2_h[30];
+    int rcv2_h[30];
 
     int low_toff;
     int upp_toff;

@@ -22,6 +22,9 @@ void LinkData::UpdatePosition(RigidBodyDynamics::Model &model_, const Eigen::Vec
     xpos = RigidBodyDynamics::CalcBodyToBaseCoordinates(model_, q_virtual_, id, Eigen::Vector3d::Zero(), false);
     xipos = RigidBodyDynamics::CalcBodyToBaseCoordinates(model_, q_virtual_, id, com_position, false);
     rotm = (RigidBodyDynamics::CalcBodyWorldOrientation(model_, q_virtual_, id, false)).transpose();
+
+    DyrosMath::rot2Euler_tf2(rotm, roll, pitch, yaw);
+
 }
 
 void LinkData::UpdateVW(RigidBodyDynamics::Model &model_, const Eigen::VectorQVQd &q_virtual_, const Eigen::VectorVQd &q_dot_virtual_)
@@ -30,6 +33,11 @@ void LinkData::UpdateVW(RigidBodyDynamics::Model &model_, const Eigen::VectorQVQ
 
     v = vw.segment(3, 3);
     w = vw.segment(0, 3);
+
+    vw = RigidBodyDynamics::CalcPointVelocity6D(model_, q_virtual_, q_dot_virtual_, id, model_.mBodies[id].mCenterOfMass, false);
+
+    vi = vw.segment(3, 3);
+    // wi = vwc.segment(0, 3);
 }
 
 void LinkData::GetPointPos(RigidBodyDynamics::Model &model_, const Eigen::VectorQVQd &q_virtual_, const Eigen::VectorVQd &q_dot_virtual_, Eigen::Vector3d &local_pos, Eigen::Vector3d &global_pos, Eigen::Vector6d &global_velocity6D)
@@ -87,6 +95,10 @@ void LinkData::UpdateJacobian(RigidBodyDynamics::Model &model_, const Eigen::Vec
 
     v = vw.segment(3, 3);
     w = vw.segment(0, 3);
+
+    vw = RigidBodyDynamics::CalcPointVelocity6D(model_, q_virtual_, q_dot_virtual_, id, model_.mBodies[id].mCenterOfMass, false);
+
+    vi = vw.segment(3, 3);
 }
 
 void LinkData::SetTrajectory(Eigen::Vector3d position_desired, Eigen::Vector3d velocity_desired, Eigen::Matrix3d rotation_desired, Eigen::Vector3d rotational_velocity_desired)
@@ -95,6 +107,55 @@ void LinkData::SetTrajectory(Eigen::Vector3d position_desired, Eigen::Vector3d v
     v_traj = velocity_desired;
     r_traj = rotation_desired;
     w_traj = rotational_velocity_desired;
+}
+
+void LinkData::SetTrajectoryLinear(double current_time, double accel_time, double start_time, double end_time)
+{
+    SetTrajectoryLinear(current_time, accel_time, start_time, end_time, x_desired, x_init);
+}
+
+void LinkData::SetTrajectoryLinear(double current_time, double accel_time, double start_time, double end_time, Eigen::Vector3d position_desired, Eigen::Vector3d position_init)
+{
+
+    for (int i = 0; i < 3; i++)
+    {
+        double acc = (position_desired(i) - position_init(i)) / ((end_time - start_time - accel_time) * accel_time);
+        double vel_c = acc * accel_time;
+
+        if (current_time < start_time)
+        {
+            x_traj(i) = position_init(i);
+            v_traj(i) = 0;
+            a_traj(i) = 0;
+        }
+        else if (current_time >= start_time && current_time < start_time + accel_time)
+        {
+            x_traj(i) = position_init(i) + 0.5 * acc * (current_time - start_time) * (current_time - start_time);
+            v_traj(i) = acc * (current_time - start_time);
+            a_traj(i) = acc;
+        }
+        else if (current_time >= start_time + accel_time && current_time < end_time - accel_time)
+        {
+            x_traj(i) = position_init(i) + acc * accel_time * accel_time / 2 + vel_c * (current_time - accel_time - start_time);
+            v_traj(i) = vel_c;
+            a_traj(i) = 0;
+        }
+        else if (current_time >= end_time - accel_time && current_time < end_time)
+        {
+            double time_frag = current_time - end_time + accel_time;
+
+            x_traj(i) = position_init(i) + acc * accel_time * accel_time / 2 + vel_c * (end_time - start_time - 2 * accel_time) + vel_c * time_frag - acc * time_frag * time_frag / 2;
+            // position_init(i) + acc * accel_time * accel_time / 2 + vel_c * (current_time - start_time - accel_time) - acc * (current_time - end_time + accel_time) * (current_time - end_time + accel_time) * 0.5;
+            v_traj(i) = vel_c - acc * (current_time - (end_time - accel_time));
+            a_traj(i) = -acc;
+        }
+        else if (current_time >= end_time)
+        {
+            x_traj(i) = position_desired(i);
+            v_traj(i) = 0;
+            a_traj(i) = 0;
+        }
+    }
 }
 
 void LinkData::SetTrajectoryQuintic(double current_time, double start_time, double end_time)
@@ -167,6 +228,34 @@ void LinkData::SetTrajectoryQuintic(double current_time, double start_time, doub
     w_traj = Eigen::Vector3d::Zero();
 }
 
+void LinkData::SetTrajectoryCubic(double current_time, double start_time, double end_time, Eigen::Vector3d pos_init, Eigen::Vector3d vel_init, Eigen::Vector3d pos_desired, Eigen::Vector3d vel_desired)
+{
+    for (int i = 0; i < 3; i++)
+    {
+        x_traj(i) = DyrosMath::cubic(current_time, start_time, end_time, pos_init(i), pos_desired(i), vel_init(i), vel_desired(i));
+        v_traj(i) = DyrosMath::cubicDot(current_time, start_time, end_time, pos_init(i), pos_desired(i), vel_init(i), vel_desired(i));
+        a_traj(i) = DyrosMath::cubicDdot(current_time, start_time, end_time, pos_init(i), pos_desired(i), vel_init(i), vel_desired(i));
+    }
+    r_traj = rot_init;
+    w_traj = Eigen::Vector3d::Zero();
+}
+// set realtime trajectory of link from cubic spline.
+void LinkData::SetTrajectoryCubic(double current_time, double start_time, double end_time)
+{
+    SetTrajectoryCubic(current_time, start_time, end_time, x_init, v_init, x_desired, Eigen::Vector3d::Zero());
+}
+
+// set realtime trajectory of link from cubic spline.
+void LinkData::SetTrajectoryCubic(double current_time, double start_time, double end_time, Eigen::Vector3d pos_desired)
+{
+    SetTrajectoryCubic(current_time, start_time, end_time, x_init, v_init, pos_desired, Eigen::Vector3d::Zero());
+}
+// set realtime trajectory of link from cubic spline.
+void LinkData::SetTrajectoryCubic(double current_time, double start_time, double end_time, Eigen::Vector3d pos_init, Eigen::Vector3d pos_desired)
+{
+    SetTrajectoryCubic(current_time, start_time, end_time, pos_init, v_init, pos_desired, Eigen::Vector3d::Zero());
+}
+
 void LinkData::SetTrajectoryRotation(double current_time, double start_time, double end_time)
 {
     Eigen::Quaterniond q0(rot_init);
@@ -197,7 +286,7 @@ void LinkData::SetGain(double pos_p, double pos_d, double pos_a, double rot_p, d
 
 void LinkData::SetTrajectoryRotation(double current_time, double start_time, double end_time, bool local_)
 {
-    //if local_ is true, local based rotation control
+    // if local_ is true, local based rotation control
     Eigen::Vector3d axis;
     double angle;
     if (local_)
@@ -271,7 +360,9 @@ void LinkData::SetTrajectoryRotation(double current_time, double start_time, dou
 void LinkData::SetInitialWithPosition()
 {
     x_init = xpos;
+    xi_init = xipos;
     v_init = v;
+    vi_init = vi;
     rot_init = rotm;
     w_init = w;
     DyrosMath::rot2Euler_tf2(rotm, roll_init, pitch_init, yaw_init);
@@ -283,20 +374,23 @@ void LinkData::SetInitialWithTrajectory()
     v_init = v_traj;
     rot_init = r_traj;
     w_init = w_traj;
+
+    DyrosMath::rot2Euler_tf2(r_traj, roll_init, pitch_init, yaw_init);
+
 }
 
 void EndEffector::SetContact(RigidBodyDynamics::Model &model_, Eigen::VectorQVQd &q_virtual_)
 {
     j_temp.setZero(6, MODEL_DOF_VIRTUAL);
 
-    //mtx_rbdl.lock();
+    // mtx_rbdl.lock();
     RigidBodyDynamics::CalcPointJacobian6D(model_, q_virtual_, id, contact_point, j_temp, false);
 
     xpos_contact = RigidBodyDynamics::CalcBodyToBaseCoordinates(model_, q_virtual_, id, contact_point, false);
 
-    //mtx_rbdl.unlock();
-    // jac_Contact.block<3,MODEL_DOF+6>(0,0)=fj_.block<3,MODEL_DOF+6>(3,0)*E_T_;
-    // jac_Contact.block<3,MODEL_DOF+6>(3,0)=fj_.block<3,MODEL_DOF+6>(0,0)*E_T_;
+    // mtx_rbdl.unlock();
+    //  jac_Contact.block<3,MODEL_DOF+6>(0,0)=fj_.block<3,MODEL_DOF+6>(3,0)*E_T_;
+    //  jac_Contact.block<3,MODEL_DOF+6>(3,0)=fj_.block<3,MODEL_DOF+6>(0,0)*E_T_;
     jac_contact.block<3, MODEL_DOF + 6>(0, 0) = j_temp.block<3, MODEL_DOF + 6>(3, 0).cast<Eigen::lScalar>();
     jac_contact.block<3, MODEL_DOF + 6>(3, 0) = j_temp.block<3, MODEL_DOF + 6>(0, 0).cast<Eigen::lScalar>();
 
@@ -334,6 +428,79 @@ void EndEffector::UpdateLinkData(LinkData &lk_)
 
     rotm = lk_.rotm;
 
+    roll = lk_.roll;
+    pitch = lk_.pitch;
+    yaw = lk_.yaw;
+
     memcpy(&jac, &lk_.jac, sizeof(Matrix6Vf));
     memcpy(&jac_com, &lk_.jac_com, sizeof(Matrix6Vf));
+}
+
+MatrixXd EndEffector::GetZMPConstMatrix()
+{
+    MatrixXd zmp_const_mat = MatrixXd::Zero(4, 6);
+
+    zmp_const_mat(0, 2) = -cs_x_length;
+    zmp_const_mat(0, 4) = -1;
+
+    zmp_const_mat(1, 2) = -cs_x_length;
+    zmp_const_mat(1, 4) = 1;
+
+    zmp_const_mat(2, 2) = -cs_y_length;
+    zmp_const_mat(2, 3) = -1;
+
+    zmp_const_mat(3, 2) = -cs_y_length;
+    zmp_const_mat(3, 3) = 1;
+
+    return zmp_const_mat;
+}
+
+MatrixXd EndEffector::GetForceConstMatrix()
+{
+    MatrixXd force_const_matrix = MatrixXd::Zero(6, 6);
+
+    force_const_matrix(0, 0) = 1.0;
+    force_const_matrix(0, 2) = -friction_ratio;
+    force_const_matrix(1, 0) = -1.0;
+    force_const_matrix(1, 2) = -friction_ratio;
+
+    force_const_matrix(2, 1) = 1.0;
+    force_const_matrix(2, 2) = -friction_ratio;
+    force_const_matrix(3, 1) = -1.0;
+    force_const_matrix(3, 2) = -friction_ratio;
+
+    force_const_matrix(4, 5) = 1.0;
+    force_const_matrix(4, 2) = -friction_ratio_z;
+    force_const_matrix(5, 5) = -1.0;
+    force_const_matrix(5, 2) = -friction_ratio_z;
+
+    return force_const_matrix;
+}
+
+TaskSpace::TaskSpace()
+{
+    task_dof_ = -1;
+}
+
+TaskSpace::TaskSpace(int task_dof)
+{
+    task_dof_ = task_dof;
+}
+
+void TaskSpace::Update(const MatrixXd &J_task, const VectorXd &f_star)
+{
+    int dof_jtask = J_task.rows();
+    int dof_fstar = f_star.size();
+
+    if (dof_jtask == dof_fstar)
+    {
+        J_task_ = J_task;
+        f_star_ = f_star;
+
+        task_dof_ = dof_jtask;
+    }
+    else
+    {
+        std::cout << "TASK DOF MISMATCH ERROR " << std::endl;
+    }
 }
