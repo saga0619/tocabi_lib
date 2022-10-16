@@ -9,7 +9,7 @@
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
 #include <atomic>
-
+#include <sys/types.h>
 #include "tocabi_lib/link.h"
 #include "shm_msgs.h"
 #include "tocabi_msgs/TaskCommandQue.h"
@@ -197,6 +197,9 @@ struct RobotData
     bool semode = false;
     bool semode_init = false;
 
+    bool tc_avatar_switch = false;
+    bool avatar_reboot_signal = false;
+
     double state_ctime_total_ = 0;
     double state_ctime_avg_ = 0;
 
@@ -222,6 +225,8 @@ struct RobotData
 
 
     ///////////////////
+
+    volatile bool reboot_signal = false;
 };
 
 struct DataContainer
@@ -256,11 +261,18 @@ struct DataContainer
     bool toruqeDecreaseSeq = false;
     bool torqueOn = false;
 
+    bool position_signal = false;
+    bool gravity_signal = false;
+
+    bool avatarMode = false;
+
     bool inityawSwitch = false;
     bool ftcalibSwtich = false;
+    bool handft_calib_signal_ = false;
     bool imuResetSwtich = false;
     bool stateEstimateSwitch = false;
     bool safetyResetSwitch = false;
+    bool fthandzeroSwtich = false;
 
     Vector12d qlock_des;
     bool locklower = false;
@@ -272,5 +284,13 @@ struct DataContainer
 
     atomic<bool> triggerThread1;
 };
+
+
+static std::atomic<int> num1;
+static std::atomic<int> num2;
+static std::atomic<int> num3;
+static std::atomic<int> num4;
+static std::atomic<int> num5;
+
 
 #endif

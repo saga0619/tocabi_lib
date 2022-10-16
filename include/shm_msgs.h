@@ -106,6 +106,8 @@ typedef struct SHMmsgs
     volatile bool initializeModeUpper;
     volatile bool safety_disable;
     volatile bool lower_disabled;
+    volatile bool grav_signal;
+    volatile bool pos_signal;
 
     int64_t std_timer_ns;
 
@@ -154,6 +156,9 @@ typedef struct SHMmsgs
 
     volatile int e1_m[10] = {0};
     volatile int e2_m[10] = {0};
+
+    int an_t1[10] = {0};
+    int an_t2[10] = {0};
 
 } SHMmsgs;
 
