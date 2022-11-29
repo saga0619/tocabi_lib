@@ -173,7 +173,7 @@ namespace TOCABI
 } // namespace TOCABI
 
 
-#define _MAXTORQUE 1200
+#define _MAXTORQUE 1500
 
 //static atomic
 const std::string cred("\033[0;31m");

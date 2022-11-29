@@ -273,6 +273,7 @@ struct DataContainer
     bool stateEstimateSwitch = false;
     bool safetyResetSwitch = false;
     bool fthandzeroSwtich = false;
+    bool fthandcalibreset = false;
 
     Vector12d qlock_des;
     bool locklower = false;
