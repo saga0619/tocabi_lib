@@ -67,7 +67,7 @@ namespace WBC
     void CalcJKT(RobotData &rd_, TaskSpace &ts_);
     void CalcTaskNull(RobotData &rd_, TaskSpace &ts_);
     
-    VectorQd GetGravityOnContactLocal(RobotData Robot, bool left_foot, bool right_foot);
+    // VectorQd GetGravityOnContactLocal(RobotData Robot, bool left_foot, bool right_foot);
 
 
 }

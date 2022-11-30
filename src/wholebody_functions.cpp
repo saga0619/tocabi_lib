@@ -214,11 +214,11 @@ namespace WBC
         Robot.ee_[3].SetContact(Robot.model_, Robot.q_virtual_);
     }
 
-    VectorQd GetGravityOnContactLocal(RobotData Robot, bool left_foot, bool right_foot)
-    {
-        SetContact(Robot,left_foot,right_foot);
-        return WBC::ContactForceRedistributionTorqueWalking(Robot, WBC::GravityCompensationTorque(Robot), 0.9, 1, 0);
-    }
+    // VectorQd GetGravityOnContactLocal(RobotData Robot, bool left_foot, bool right_foot)
+    // {
+    //     SetContact(Robot,left_foot,right_foot);
+    //     return WBC::ContactForceRedistributionTorqueWalking(Robot, WBC::GravityCompensationTorque(Robot), 0.9, 1, 0);
+    // }
 
     void SetContact(RobotData &Robot, bool left_foot, bool right_foot, bool left_hand, bool right_hand)
     {
