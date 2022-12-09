@@ -115,8 +115,9 @@ namespace WBC
 
         rd_.W_inv = DyrosMath::pinv_COD(rd_.W, rd_.qr_V2);
 
-        rd_.NwJw = rd_.qr_V2.transpose() * (rd_.J_C_INV_T.rightCols(MODEL_DOF).topRows(6) * rd_.qr_V2.transpose()).inverse();
-
+        //// this line is problem!!!! (to JH)
+        // rd_.NwJw = rd_.qr_V2.transpose() * (rd_.J_C_INV_T.rightCols(MODEL_DOF).topRows(6) * rd_.qr_V2.transpose()).inverse();
+ 
         rd_.G.setZero();
         for (int i = 0; i < MODEL_DOF + 1; i++)
             rd_.G -= rd_.link_[i].jac_com.cast<double>().topRows(3).transpose() * rd_.link_[i].mass * rd_.grav_ref;
@@ -214,11 +215,11 @@ namespace WBC
         Robot.ee_[3].SetContact(Robot.model_, Robot.q_virtual_);
     }
 
-    VectorQd GetGravityOnContactLocal(RobotData Robot, bool left_foot, bool right_foot)
-    {
-        SetContact(Robot,left_foot,right_foot);
-        return WBC::ContactForceRedistributionTorqueWalking(Robot, WBC::GravityCompensationTorque(Robot), 0.9, 1, 0);
-    }
+    // VectorQd GetGravityOnContactLocal(RobotData Robot, bool left_foot, bool right_foot)
+    // {
+    //     SetContact(Robot,left_foot,right_foot);
+    //     return WBC::ContactForceRedistributionTorqueWalking(Robot, WBC::GravityCompensationTorque(Robot), 0.9, 1, 0);
+    // }
 
     void SetContact(RobotData &Robot, bool left_foot, bool right_foot, bool left_hand, bool right_hand)
     {

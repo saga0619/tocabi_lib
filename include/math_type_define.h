@@ -1122,12 +1122,30 @@ namespace DyrosMath
     cod.compute(A);
 
     int rank = cod.rank();
+    
+    if ((rank == MODEL_DOF - 18) || (rank == MODEL_DOF - 12) || (rank == MODEL_DOF - 6) || (rank == MODEL_DOF))
+    {
+      Eigen::MatrixXd vtemp = cod.householderQ().transpose();
 
-    Eigen::MatrixXd vtemp = cod.householderQ().transpose();
+      V2 = vtemp.block(rank, 0, A.rows() - rank, A.cols());
+      
+      Eigen::MatrixXd output_temp = cod.pseudoInverse();
 
-    V2 = vtemp.block(rank, 0, A.rows() - rank, A.cols());
+      // if(rank == MODEL_DOF)
+      // {
+      //     std::cout<< "rank is MODEL_DOF!!!!" <<std::endl;
+      //     std::cout<<"A size"<< A.rows() << ", " << A.cols() << std::endl;
+      //     std::cout<<"V2 size"<< V2.rows() << ", " << V2.cols() << std::endl;
+      //     std::cout<<"output_temp size"<< output_temp.rows() << ", " << output_temp.cols() << std::endl;
+      // }
 
-    return cod.pseudoInverse();
+      return output_temp;
+    }
+    else
+    {
+      std::cout << "pinv_COD Calc Error : rank = " << rank << std::endl;
+      return A.transpose()*(A*A.transpose() + Eigen::MatrixQQd::Identity()*1.0e-6 ).inverse();
+    }
   }
 
   static Eigen::MatrixXd pinv_QR(const Eigen::MatrixXd &A, Eigen::MatrixXd &V2) // faster than pinv_SVD,

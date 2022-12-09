@@ -47,7 +47,8 @@ struct RobotData
     ~RobotData() { std::cout << "rd terminate" << std::endl; }
     /////////////////////////////////////////////////
     ///////////REFRESHING VARIABLES START////////////
-
+    // volatile float control_time_;
+    // volatile int64_t control_time_us_;
     std::atomic<float> control_time_;
     std::atomic<int64_t> control_time_us_;
 
@@ -160,9 +161,9 @@ struct RobotData
 
     //Task Command
     tocabi_msgs::TaskCommand tc_;
-    atomic<bool> task_signal_{};
+    volatile bool task_signal_;
     tocabi_msgs::TaskCommandQue tc_q_;
-    atomic<bool> task_que_signal_{};
+    volatile bool task_que_signal_;
     bool tc_init = false;
     bool tc_run = false;
     double tc_time_;
