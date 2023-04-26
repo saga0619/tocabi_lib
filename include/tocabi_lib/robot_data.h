@@ -235,7 +235,7 @@ struct DataContainer
     ~DataContainer() { std::cout << "DC terminate" << std::endl; }
     ros::NodeHandle nh;
     RobotData rd_;
-
+ 
     std::atomic<int> control_command_count{0};
     std::vector<float> Kps;
     std::vector<float> Kvs;
@@ -275,6 +275,9 @@ struct DataContainer
     bool safetyResetSwitch = false;
     bool fthandzeroSwtich = false;
     bool fthandcalibreset = false;
+
+    bool logdata_start = false;
+    bool logdata_stop = false;
 
     Vector12d qlock_des;
     bool locklower = false;

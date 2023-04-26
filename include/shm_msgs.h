@@ -118,12 +118,14 @@ typedef struct SHMmsgs
     float lat_avg, lat_min, lat_max, lat_dev;
     float send_avg, send_min, send_max, send_dev;
     float rcv_avg, rcv_min, rcv_max, rcv_dev;
+    float rsat_avg, rsat_min, rsat_max, rsat_dev;
     int lat_ovf, send_ovf;
 
 
     float lat_avg2, lat_min2, lat_max2, lat_dev2;
     float send_avg2, send_min2, send_max2, send_dev2;
     float rcv_avg2, rcv_min2, rcv_max2, rcv_dev2;
+    float rsat_avg2, rsat_min2, rsat_max2, rsat_dev2;
     int lat_ovf2, send_ovf2;
 
     int r_us, l_us, s_us;
@@ -153,12 +155,15 @@ typedef struct SHMmsgs
     volatile bool safety_reset_lower_signal;
     volatile bool safety_reset_upper_signal;
     bool force_load_saved_signal = false;
+    bool ecat_report = false;
 
     volatile int e1_m[10] = {0};
     volatile int e2_m[10] = {0};
 
     int an_t1[10] = {0};
     int an_t2[10] = {0};
+
+    int ecat_timestep = 0;
 
 } SHMmsgs;
 
