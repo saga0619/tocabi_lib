@@ -22,6 +22,8 @@ namespace WBC
         rd_.ee_[2].InitializeEE(rd_.link_[TOCABI::Left_Hand], 0.02, 0.02, 40, 0.2, 0.2);
         rd_.ee_[3].InitializeEE(rd_.link_[TOCABI::Right_Hand], 0.02, 0.02, 40, 0.2, 0.2);
 
+        rd_.task_force_.setZero(6);
+
         for (int i = 0; i < MODEL_DOF; i++)
             rd_.torque_limit[i] = 1000 / NM2CNT[i];
     }
@@ -108,6 +110,7 @@ namespace WBC
     {
         rd_.I_C.setIdentity(rd_.contact_index * 6, rd_.contact_index * 6);
         rd_.Lambda_c = (rd_.J_C * rd_.A_inv_ * rd_.J_C.transpose()).inverse();
+
         rd_.J_C_INV_T = rd_.Lambda_c * rd_.J_C * rd_.A_inv_;
         rd_.N_C = MatrixVVd::Identity() - rd_.J_C.transpose() * rd_.J_C_INV_T;
         rd_.W = rd_.A_inv_.bottomRows(MODEL_DOF) * rd_.N_C.rightCols(MODEL_DOF);
@@ -116,8 +119,18 @@ namespace WBC
         rd_.W_inv = DyrosMath::pinv_COD(rd_.W, rd_.qr_V2);
 
         //// this line is problem!!!! (to JH)
-        // rd_.NwJw = rd_.qr_V2.transpose() * (rd_.J_C_INV_T.rightCols(MODEL_DOF).topRows(6) * rd_.qr_V2.transpose()).inverse();
- 
+        // std::cout << rd_.qr_V2.cols() << " " << rd_.qr_V2.rows() << std::endl;
+
+        if ((rd_.qr_V2.cols() == 33) && (rd_.qr_V2.rows() == (rd_.contact_index * 6 - 6)) && (rd_.contact_index > 1))
+        {
+            rd_.NwJw = rd_.qr_V2.transpose() * (rd_.J_C_INV_T.rightCols(MODEL_DOF).topRows(6) * rd_.qr_V2.transpose()).inverse();
+        }
+        else
+        {
+            if (rd_.contact_index != 1)
+                std::cout << "Contact Calculation Error ! " << std::endl;
+        }
+
         rd_.G.setZero();
         for (int i = 0; i < MODEL_DOF + 1; i++)
             rd_.G -= rd_.link_[i].jac_com.cast<double>().topRows(3).transpose() * rd_.link_[i].mass * rd_.grav_ref;
@@ -1620,8 +1633,8 @@ namespace WBC
         if (qp_h_.SolveQPoases(300, qpres))
         {
             fstar_result = qpres.segment(0, task_dof);
-
-            contact_result = qpres.segment(task_dof, contact_dof);
+            if (contact_dof > 0)
+                contact_result = qpres.segment(task_dof, contact_dof);
             return 1;
         }
         else

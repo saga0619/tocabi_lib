@@ -142,6 +142,8 @@ struct RobotData
     VectorQd torque_grav;
     VectorQd torque_contact;
 
+    VectorXd task_force_;
+
     Vector12d fc_redist_;
 
     VectorVQd non_linear;
