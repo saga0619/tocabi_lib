@@ -230,6 +230,8 @@ struct RobotData
     ///////////////////
 
     volatile bool reboot_signal = false;
+
+    std::mutex mtx;
 };
 
 struct DataContainer
