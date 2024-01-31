@@ -166,6 +166,7 @@ struct RobotData
     volatile bool task_signal_;
     tocabi_msgs::TaskCommandQue tc_q_;
     volatile bool task_que_signal_;
+    volatile bool task_que_mode_;
     bool tc_init = false;
     bool tc_run = false;
     double tc_time_;
