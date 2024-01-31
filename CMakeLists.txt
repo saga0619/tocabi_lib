@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(tocabi_lib)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-O)
+add_compile_options(-O3)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -121,7 +121,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME} STATIC
   src/link.cpp
   src/qp.cpp
   src/wholebody_functions.cpp
