@@ -142,6 +142,8 @@ struct RobotData
     VectorQd torque_grav;
     VectorQd torque_contact;
 
+    VectorXd task_force_;
+
     Vector12d fc_redist_;
 
     VectorVQd non_linear;
@@ -164,6 +166,7 @@ struct RobotData
     volatile bool task_signal_;
     tocabi_msgs::TaskCommandQue tc_q_;
     volatile bool task_que_signal_;
+    volatile bool task_que_mode_;
     bool tc_init = false;
     bool tc_run = false;
     double tc_time_;
@@ -228,6 +231,8 @@ struct RobotData
     ///////////////////
 
     volatile bool reboot_signal = false;
+
+    std::mutex mtx;
 };
 
 struct DataContainer

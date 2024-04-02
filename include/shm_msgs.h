@@ -16,6 +16,7 @@
                                 : "memory")
 #endif
 
+#define mb()        asm volatile("mfence" : : : "memory")
 //per link
 //Jac * 4
 //33 * 6 * 39 * 4
